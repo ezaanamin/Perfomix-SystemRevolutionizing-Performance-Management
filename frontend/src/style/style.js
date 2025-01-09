@@ -1,4 +1,4 @@
-import styled, { keyframes, css } from 'styled-components';
+import styled from 'styled-components';
 import background from "../images/BACKGROUND.jpg"
 import { darken } from 'polished';
 export const Container = styled.div`
@@ -118,3 +118,4 @@ export const Forgotten = styled.p`
     font-size: 12px; 
   }
 `;
+

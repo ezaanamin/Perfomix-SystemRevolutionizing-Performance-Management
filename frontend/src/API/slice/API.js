@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-export const SignUpPost = createAsyncThunk(
+export const Login = createAsyncThunk(
   'post/postRequest',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axios.post('http://localhost:4000/users/', data);
+      const response = await axios.post('http://127.0.0.1:5000/login', data);
 
       if (response.data.error === 'User Exist') {
         return rejectWithValue({ error: 'User Exist' });
@@ -28,15 +28,15 @@ export const APISlice = createSlice({
   extraReducers: (builder) => {
   
       builder
-      .addCase(SignUpPost.pending, (state) => {
+      .addCase(Login.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(SignUpPost.fulfilled, (state, action) => {
+      .addCase(Login.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.data = action.payload;
         state.error = null;
       })
-      .addCase(SignUpPost.rejected, (state, action) => {
+      .addCase(Login.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       });
