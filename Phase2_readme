@@ -1,0 +1,28 @@
+This is the Software Design Specification (SDS) template for our Final Year Project (FYP). It represents the design details, project scope, architecture, and other critical components for Phase 2 of our project development. The work outlined here is for future implementation during the next phases of the project.
+
+Abstract:
+Summarizes the project's purpose, problem statement, and expected results.
+Will be updated once the final development is complete.
+Introduction:
+Explains the product details, background, objectives, and scope of the project.
+Includes business goals and conventions that guide the development process.
+To be refined as we progress in implementation.
+Overall Description:
+Outlines the product features, user classes, and functional descriptions.
+Details on constraints and dependencies are placeholders for future elaboration.
+Technical Architecture:
+
+Describes the anticipated system architecture, including data flow, application components, and infrastructure.
+Placeholder diagrams and descriptions will be replaced with actual designs and results during development.
+Screenshots/Prototype:
+
+To be populated with workflows, screenshots, or mockups of the application UI.
+Currently serves as a guideline for future design documentation.
+Revised Project Plan:
+
+Includes Gantt charts and project status updates.
+Future revisions will align with project milestones.
+References and Appendices:
+
+Provides necessary sources and glossary terms for better comprehension.
+Placeholder for Independent Verification & Validation (IV&V) details.
