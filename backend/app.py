@@ -33,7 +33,7 @@ try:
 except Error as e:
     print(f"Error while connecting to MySQL: {e}")
 @backend.route('/login',methods = ['GET', 'POST'])
-def hello_world():  
+def Login():  
     if request.method == 'POST':
         data=request.get_json()
         username=data['username']
