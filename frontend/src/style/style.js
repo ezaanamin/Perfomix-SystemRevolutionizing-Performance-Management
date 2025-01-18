@@ -119,3 +119,102 @@ export const Forgotten = styled.p`
   }
 `;
 
+export const AdminDashboardDiv = styled.div`
+  background-color: #D0DBE9;
+  width: 100%;
+  height: 100vh;
+`;
+
+// Styled Components
+export const SideBarContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+ bottom:350px;
+  left: 0;
+  height: 50vh;
+  width: 250px;
+  background-color: #80B5FA;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  border-radius: 0 10px 10px 0;
+`;
+
+export const SideBarItems = styled.div`
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+`;
+
+export const SideBarItem = styled.div`
+  font-size: 18px;
+  font-weight: bold;
+  color: black;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export const LogoutButton = styled.button`
+  font-size: 18px;
+  font-weight: bold;
+  color: red;
+  background: none;
+  border: none;
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+export const MainInput = styled.input`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -520%);
+  display: flex;
+  flex-direction: column;
+  width:920px;
+  height:50px;
+
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+`;
+export const ChartContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+position:relative;
+top:100px;
+left:200px;
+
+`;
+
+export const MenuItemContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px 25px;
+  font-weight: 500;
+  font-size:10px; 
+  color: #2D3A56 !important;
+  &:hover {
+    background-color: #868dfb !important;
+    color: black !important;
+  }
+
+  &.active {
+    color: #6870fa !important;
+  }
+`;
+export const SidebarContainer = styled.div`
+  .pro-sidebar {
+    background-color: #333 !important;
+    color: white !important;
+  }
+`;
