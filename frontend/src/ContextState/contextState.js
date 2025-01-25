@@ -4,9 +4,11 @@ export const UserContext = createContext();
 
 export function UserContextProvider({ children }) {
  
-  const [Role, SetRole] = useState("Staff");
+  const [Role, SetRole] = useState("");
+  const [Modal,SetModal]=useState(false)
   const userContextValue = {
-    Role, SetRole
+    Role, SetRole,
+    Modal,SetModal
   };
 
   return (

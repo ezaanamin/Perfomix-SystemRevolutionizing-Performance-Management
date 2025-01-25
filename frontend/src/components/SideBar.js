@@ -118,7 +118,7 @@ const SidebarPerfomix = () => {
                   Ed Roh
                 </Typography>
                 <Typography variant="h5" sx={{ color: "#4B7DE7" }}>
-                  {Role === "Admin" ? "Admin" : Role === "Manager" ? "Line Manager" : "Staff"}
+                  {Role === "admin" ? "Admin" : Role === "manager" ? "Line Manager" : "Staff"}
                 </Typography>
               </Box>
             </Box>
@@ -135,7 +135,7 @@ const SidebarPerfomix = () => {
               isCollapsed={isCollapsed}
             />
 
-{Role !== "Staff" && (
+{Role !== "staff" && (
   <>
 
             <Typography
@@ -156,7 +156,7 @@ const SidebarPerfomix = () => {
                 />
               </>
             )}
-            {Role !== "Staff" && (
+            {Role !== "staff" && (
               <Item
                 title="Performance Reports"
                 to="/reports"
@@ -166,7 +166,7 @@ const SidebarPerfomix = () => {
                 isCollapsed={isCollapsed}
               />
             )}
-            {Role === "Manager" && (
+            {Role === "manager" && (
               <Item
                 title="Anomaly Detection"
                 to="/anomaly"
@@ -176,7 +176,7 @@ const SidebarPerfomix = () => {
                 isCollapsed={isCollapsed}
               />
             )}
-            {Role !== "Staff" && (
+            {Role !== "staff" && (
               <Item
                 title="Recommendations"
                 to="/recommendations"
@@ -188,7 +188,7 @@ const SidebarPerfomix = () => {
             )}
 
             {/* Admin-specific Tools */}
-            {Role === "Admin" && (
+            {Role === "admin" && (
               <>
                 <Typography
                   variant="p"
@@ -216,7 +216,7 @@ const SidebarPerfomix = () => {
             )}
 
             {/* Analytics Section */}
-            {Role !== "Staff" && (
+            {Role !== "staff" && (
               <Typography
                 variant="p"
                 sx={{ m: "15px 0 5px 20px", color: "#4B7DE7" }}
@@ -224,7 +224,7 @@ const SidebarPerfomix = () => {
                 Analytics
               </Typography>
             )}
-            {Role !== "Staff" && (
+            {Role !== "staff" && (
               <Item
                 title="Performance Insights"
                 to="/insights"

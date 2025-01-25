@@ -3,15 +3,20 @@ import { UserContext } from "../ContextState/contextState";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, List, ListItem, ListItemText, Button } from "@mui/material";
 import InsightsIcon from "@mui/icons-material/Insights";
-import DownloadIcon from "@mui/icons-material/Download"; // New icon for download
-import GeographyChart from "../components/GeographyChart";
-
+import DownloadIcon from "@mui/icons-material/Download"; 
+import { useEffect } from "react";
 function AdminDashboard() {
   const userContext = useContext(UserContext);
   const { Role } = userContext;
+
   const navigate = useNavigate();
 
-  // Define colors for the complementary scheme
+  useEffect(() => {
+      const accessToken = localStorage.getItem("access_token");
+      if (Role !== 'manager' || !accessToken) {
+          navigate('/');
+      }
+  }, [Role, navigate]); 
   const COLORS = {
     lightThemeBackground: "#F5F9FF", // Soft Sky Blue
     lightThemeText: "#2D3A56", // Dark Navy Blue

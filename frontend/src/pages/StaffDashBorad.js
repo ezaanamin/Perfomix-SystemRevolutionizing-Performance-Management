@@ -3,12 +3,20 @@ import { UserContext } from "../ContextState/contextState";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download"; // Icon for download
+import { useEffect } from "react";
 
 function StaffDashboard() {
   const userContext = useContext(UserContext);
   const navigate = useNavigate();
+  const { Role } = userContext;
 
-  // Define colors for the complementary scheme
+
+  useEffect(() => {
+      const accessToken = localStorage.getItem("access_token");
+      if (Role !== 'staff' || !accessToken) {
+          navigate('/');
+      }
+  }, [Role, navigate]); 
   const COLORS = {
     lightThemeBackground: "#F5F9FF", // Soft Sky Blue
     lightThemeText: "#2D3A56", // Dark Navy Blue

@@ -1,11 +1,11 @@
 import React, { useContext } from "react";
 import { UserContext } from "../ContextState/contextState";
 import { useNavigate } from "react-router-dom";
-import { AdminDashboardDiv } from "../style/style"; // Import your styled components
+import { AdminDashboardDiv } from "../style/style"; 
 import LineChart from "../components/LineChart";
-import BarChart from "../components/BarChart"; // Import BarChart component
+import BarChart from "../components/BarChart"; 
 import GeographyChart from "../components/GeographyChart";
-import ProgressCircle from "../components/ProgressCircle"; // Import ProgressCircle component
+import ProgressCircle from "../components/ProgressCircle"; 
 import { Box, Button, Typography } from "@mui/material";
 import StatBox from "../components/StatsBox";
 import Header from "../components/Header";
@@ -14,13 +14,19 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import { mockTransactions } from "../data/mockData";
+import { useEffect } from "react";
 
 function AdminDashboard() {
   const userContext = useContext(UserContext);
   const { Role } = userContext;
   const navigate = useNavigate();
 
-  // Define colors for the complementary scheme
+  useEffect(() => {
+      const accessToken = localStorage.getItem("access_token");
+      if (Role !== 'admin' || !accessToken) {
+          navigate('/');
+      }
+  }, [Role, navigate]); 
   const COLORS = {
     lightThemeBackground: "#F5F9FF", // Soft Sky Blue
     lightThemeText: "#2D3A56", // Dark Navy Blue
@@ -185,7 +191,7 @@ function AdminDashboard() {
               </Typography>
             </Box>
           </Box>
-          <Box height="200px" width="1200px" mt="15px">
+          <Box height="150px" width="1200px" mt="15px">
             <LineChart isDashboard={true} chartHeight="100%" chartWidth="100%" />
           </Box>
         </Box>
