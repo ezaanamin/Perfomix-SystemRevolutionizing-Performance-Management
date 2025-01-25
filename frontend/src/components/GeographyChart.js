@@ -1,6 +1,6 @@
 import { ResponsiveChoropleth } from "@nivo/geo";
-import { geoFeatures } from "../data/mockGeoFeatures"; // Correct import
-import { darken } from "polished"; // Importing polished to darken hover colors
+import { geoFeatures } from "../data/mockGeoFeatures"; 
+import { darken } from "polished"; 
 
 const GeographyChart = ({ isDashboard = false }) => {
   // Custom color scheme

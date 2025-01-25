@@ -218,3 +218,74 @@ export const SidebarContainer = styled.div`
     color: white !important;
   }
 `;
+
+export const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+export const ModalContainer = styled.div`
+  background-color: #FFFFFF;
+  padding: 30px;
+  border-radius: 10px;
+  width: 400px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const ModalTitle = styled.h2`
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 24px;
+`;
+
+export const ModalMessage = styled.p`
+  color: #555;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+`;
+
+export const ModalButton = styled.button`
+  background-color: #4361EE;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  width: 100%;
+  padding: 15px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${darken(0.1, '#4361EE')};
+  }
+`;
+
+export const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: #4361EE;
+  font-size: 20px;
+  font-weight: bold;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+
+  &:hover {
+    color: ${darken(0.1, '#4361EE')};
+  }
+`;
