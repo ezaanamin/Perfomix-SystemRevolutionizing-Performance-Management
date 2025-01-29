@@ -6,9 +6,12 @@ export function UserContextProvider({ children }) {
  
   const [Role, SetRole] = useState("");
   const [Modal,SetModal]=useState(false)
+    const [open, setOpen] = useState(false);
+  
   const userContextValue = {
     Role, SetRole,
-    Modal,SetModal
+    Modal,SetModal,
+    open, setOpen
   };
 
   return (

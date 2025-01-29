@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AdminDashboardDiv } from "../style/style"; 
 import LineChart from "../components/LineChart";
 import BarChart from "../components/BarChart"; 
-import GeographyChart from "../components/GeographyChart";
+import GeographyChart from "../components/EmployeePerformanceDataGrid";
 import ProgressCircle from "../components/ProgressCircle"; 
 import { Box, Button, Typography } from "@mui/material";
 import StatBox from "../components/StatsBox";
@@ -18,12 +18,14 @@ import { useEffect } from "react";
 
 function AdminDashboard() {
   const userContext = useContext(UserContext);
-  const { Role } = userContext;
+  const { Role,SetRole } = userContext;
   const navigate = useNavigate();
 
   useEffect(() => {
       const accessToken = localStorage.getItem("access_token");
-      if (Role !== 'admin' || !accessToken) {
+      const role = localStorage.getItem("role");
+      SetRole(role)
+      if (role !== 'admin' || !accessToken) {
           navigate('/');
       }
   }, [Role, navigate]); 
@@ -146,7 +148,14 @@ function AdminDashboard() {
           gridRow="span 2"
           backgroundColor={COLORS.lightThemeBackground}
         >
-          <Typography variant="h5" fontWeight="600" sx={{ padding: "30px 30px 0 30px" }}>
+         <Typography
+  variant="p"
+  fontWeight="600"
+  sx={{
+    padding: "100px 100px 0 90px",
+  
+  }}
+>
             Real-Time KPI Tracking & Anomaly Detection
           </Typography>
           <Box height="250px" mt="-20px">
@@ -161,7 +170,7 @@ function AdminDashboard() {
           backgroundColor={COLORS.lightThemeBackground}
           padding="30px"
         >
-          <Typography variant="h5" fontWeight="600" sx={{ marginBottom: "15px" }}>
+          <Typography variant="p" fontWeight="600" sx={{ marginBottom: "10px" }}>
             NLP-Based Employee Recommendations
           </Typography>
           <Box height="200px">

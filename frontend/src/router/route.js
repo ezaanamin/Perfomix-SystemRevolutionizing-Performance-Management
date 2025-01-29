@@ -7,6 +7,8 @@ import StaffDashBorad from '../pages/StaffDashBorad';
 import SidebarAdmin from '../components/SideBar'; // Import Sidebar
 import Topbar from '../components/TopBar'; // Import Topbar
 import { Box } from '@mui/material';
+import KPI from '../components/KPI';
+import Users from '../components/Users';
 
 function AppRoutes() {
     return (
@@ -52,6 +54,22 @@ function AppRoutes() {
                         </Box>
                     } 
                 />
+                                <Route path="/kpi" element={    <Box display="flex" height="100vh">
+                            <SidebarAdmin />
+                            <Box flex={1} display="flex" flexDirection="column">
+                                <Topbar />
+                           <KPI/>
+                            </Box>
+                        </Box>} />
+
+                        <Route path="/users" element={    <Box display="flex" height="100vh">
+                            <SidebarAdmin />
+                            <Box flex={1} display="flex" flexDirection="column">
+                                <Topbar />
+                           <Users/>
+                            </Box>
+                        </Box>} />
+
             </ReactRoutes>
         </Router>
     );

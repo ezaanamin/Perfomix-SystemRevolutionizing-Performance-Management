@@ -10,7 +10,7 @@ function Login() {
   
   const {  Modal,SetModal } = userContext;
   const closeModal = () => {
-    SetModal(false); // Close modal
+    SetModal(false); 
   };
 
   return (

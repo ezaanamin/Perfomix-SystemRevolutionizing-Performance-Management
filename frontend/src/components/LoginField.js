@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { LoginFields, LoginContainer, LoginButton, Forgotten } from '../style/style';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -17,12 +17,11 @@ function LoginField() {
   const userContext = useContext(UserContext);
   const { SetRole, SetModal } = userContext;
   const dispatch = useDispatch();
-
  
+
 
   return (
     <>
-      {/* Alert Modal */}
      
 
       <LoginContainer>
@@ -37,14 +36,17 @@ function LoginField() {
             console.log(response.payload, 'ezaan amin');
             
             if (response.payload.error) {
-              SetModal(true); // Show modal if login fails
+              SetModal(true); 
             }
 
             if (response.payload.access_token) {
               localStorage.setItem('access_token', response.payload.access_token);
+
               const data = jwtDecode(response.payload.access_token);
               console.log(data.role);
               SetRole(data.role);
+              localStorage.setItem('role', data.role);
+
 
               if (data.role === 'admin') {
                 navigate('/admin');
