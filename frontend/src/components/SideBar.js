@@ -16,13 +16,21 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import Admin from "../images/admin.jpeg";
 import { UserContext } from "../ContextState/contextState";
+import { useNavigate } from "react-router-dom";
+
 
 const Item = ({ title, to, icon, selected, setSelected, isCollapsed }) => {
+  const navigate = useNavigate();
+  const handleNavigation = () => {
+    setSelected(title);
+    navigate(to);
+  };
   const isActive = selected === title;
   return (
     <MenuItem
       active={isActive}
-      onClick={() => setSelected(title)}
+      onClick={handleNavigation}
+   
       icon={icon}
       style={{
         color: isActive ? "#6870fa" : "#4B7DE7",
@@ -97,7 +105,7 @@ const SidebarPerfomix = () => {
             )}
           </MenuItem>
 
-          {/* User Profile */}
+
           {!isCollapsed && (
             <Box mb="25px">
               <Box display="flex" justifyContent="center" alignItems="center">
@@ -128,7 +136,7 @@ const SidebarPerfomix = () => {
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"
-              to="/"
+              to="/admin"
               icon={<HomeOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -187,7 +195,7 @@ const SidebarPerfomix = () => {
               />
             )}
 
-            {/* Admin-specific Tools */}
+        
             {Role === "admin" && (
               <>
                 <Typography
@@ -215,7 +223,7 @@ const SidebarPerfomix = () => {
               </>
             )}
 
-            {/* Analytics Section */}
+        
             {Role !== "staff" && (
               <Typography
                 variant="p"

@@ -289,3 +289,26 @@ export const CloseButton = styled.button`
     color: ${darken(0.1, '#4361EE')};
   }
 `;
+export const KPIButton = styled.button`
+  background-color: #4361EE; /* A more vibrant and clean color */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 200px; /* Smaller width for a better fit */
+  height: 50px; /* Adjusted height for better alignment */
+  border-radius: 20px;
+  color: white;
+  font-size: 16px; /* Smaller font size */
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${darken(0.1, '#4361EE')}; /* Darken on hover */
+  }
+
+  @media (max-width: 768px) {
+    width: 150px; /* Adjust width for smaller screens */
+    height: 45px; /* Adjust height for smaller screens */
+    font-size: 14px; /* Adjust font size for smaller screens */
+  }
+`;

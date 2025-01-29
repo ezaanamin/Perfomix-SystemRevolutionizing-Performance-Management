@@ -2,8 +2,6 @@ import { useTheme } from "@mui/material";
 import { ResponsiveBar } from "@nivo/bar";
 import { darken } from "polished"; // For color adjustments
 
-
-
 const BarChart = ({ isDashboard = false }) => {
   const theme = useTheme();
 
@@ -21,59 +19,56 @@ const BarChart = ({ isDashboard = false }) => {
     hoverGraph: darken(0.1, "#4361EE"), // Darkened Bright Blue for hover on graph
   };
 
-  // mockData.js
+  // Reshaped KPI data structure for better visualization
+  const kpiData = [
+    {
+      role: "Software Engineer",
+      "Code Quality": 95.00,
+      "Code Efficiency": 10.00,
+      "Commit Frequency": 10,
+      "Task Completion Rate": 90.00,
+    },
+    {
+      role: "Project Manager",
+      "Milestone Achievement Rate": 95.00,
+      "Budget Utilization": 5.00,
+      "Resource Allocation": 85.00,
+    },
+    {
+      role: "Business Manager",
+      "Revenue Growth": 10.00,
+      "Customer Satisfaction": 80.00,
+      "Operational Efficiency": 15.00,
+    },
+    {
+      role: "Testing Team",
+      "Test Case Coverage": 95.00,
+      "Bug Detection Rate": 100,
+      "Test Execution Time": 20.00,
+    },
+    // Add more data entries if necessary
+  ];
 
- const mockBarData = [
-  {
-    country: "USA",
-    "hot dog": 133,
-    burger: 45,
-    sandwich: 57,
-    kebab: 39,
-    fries: 91,
-    donut: 45,
-  },
-  {
-    country: "Canada",
-    "hot dog": 101,
-    burger: 68,
-    sandwich: 89,
-    kebab: 29,
-    fries: 55,
-    donut: 34,
-  },
-  {
-    country: "UK",
-    "hot dog": 120,
-    burger: 85,
-    sandwich: 66,
-    kebab: 75,
-    fries: 100,
-    donut: 40,
-  },
-  {
-    country: "Germany",
-    "hot dog": 95,
-    burger: 120,
-    sandwich: 45,
-    kebab: 50,
-    fries: 78,
-    donut: 52,
-  },
-  {
-    country: "Australia",
-    "hot dog": 140,
-    burger: 78,
-    sandwich: 60,
-    kebab: 32,
-    fries: 88,
-    donut: 46,
-  },
-];
+  // All keys in the chart
+  const allKeys = [
+    "Code Quality",
+    "Code Efficiency",
+    "Commit Frequency",
+    "Task Completion Rate",
+    "Milestone Achievement Rate",
+    "Budget Utilization",
+    "Resource Allocation",
+    "Revenue Growth",
+    "Customer Satisfaction",
+    "Operational Efficiency",
+    "Test Case Coverage",
+    "Bug Detection Rate",
+    "Test Execution Time",
+  ];
 
   return (
     <ResponsiveBar
-      data={mockBarData} // Using the mock data
+      data={kpiData} // Using the reshaped KPI data
       theme={{
         axis: {
           domain: {
@@ -93,6 +88,7 @@ const BarChart = ({ isDashboard = false }) => {
             },
             text: {
               fill: colors.text,
+              fontSize: 9, // Reduced font size for tick labels
             },
           },
         },
@@ -102,10 +98,10 @@ const BarChart = ({ isDashboard = false }) => {
           },
         },
       }}
-      keys={["hot dog", "burger", "sandwich", "kebab", "fries", "donut"]}
-      indexBy="country"
-      margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
-      padding={0.3}
+      keys={allKeys} // Display all keys in the chart
+      indexBy="role" // The x-axis labels (roles)
+      margin={{ top: 50, right: 20, bottom: 20, left: 60 }}
+      padding={0.5}
       valueScale={{ type: "linear" }}
       indexScale={{ type: "band", round: true }}
       colors={{ scheme: "nivo" }}
@@ -139,52 +135,34 @@ const BarChart = ({ isDashboard = false }) => {
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "country",
+        legend: isDashboard ? undefined : "Role",
         legendPosition: "middle",
         legendOffset: 32,
+        tickFontSize: 10, // Reduced font size for axis bottom labels
       }}
       axisLeft={{
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "food",
+        legend: isDashboard ? undefined : "KPI",
         legendPosition: "middle",
         legendOffset: -40,
+        tickFontSize: 10, // Reduced font size for axis left labels
       }}
-      enableLabel={false}
+      enableLabel={true} // Ensure that the keys are enabled
       labelSkipWidth={12}
       labelSkipHeight={12}
       labelTextColor={{
         from: "color",
         modifiers: [["darker", 1.6]],
       }}
-      legends={[
-        {
-          dataFrom: "keys",
-          anchor: "bottom-right",
-          direction: "column",
-          justify: false,
-          translateX: 120,
-          translateY: 0,
-          itemsSpacing: 2,
-          itemWidth: 100,
-          itemHeight: 20,
-          itemDirection: "left-to-right",
-          itemOpacity: 0.85,
-          symbolSize: 20,
-          effects: [
-            {
-              on: "hover",
-              style: {
-                itemOpacity: 1,
-              },
-            },
-          ],
-        },
-      ]}
+      label={{
+        fontSize: 9, // Reduced font size for labels (keys)
+        fill: colors.text, // Set the text color for labels
+      }}
       role="application"
       barAriaLabel={function (e) {
-        return e.id + ": " + e.formattedValue + " in country: " + e.indexValue;
+        return e.id + ": " + e.formattedValue + " in role: " + e.indexValue;
       }}
     />
   );
