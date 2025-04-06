@@ -8,31 +8,28 @@ import { jwtDecode } from 'jwt-decode';
 import { UserContext } from '../ContextState/contextState';
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 function LoginField() {
   const navigate = useNavigate();
   const LoginSchema = Yup.object().shape({
-    username: Yup.string().required('Username is Required'),
+    Name: Yup.string().required('Name is Required'),
     password: Yup.string().required('Password is Required'),
   });
   const userContext = useContext(UserContext);
   const { SetRole, SetModal } = userContext;
   const dispatch = useDispatch();
- 
-
 
   return (
     <>
-     
-
       <LoginContainer>
         <Formik
           initialValues={{
-            username: '',
+            Name: '',
             password: '',
           }}
           validationSchema={LoginSchema}
           onSubmit={async (values) => {
-            const response = await dispatch(Login({ username: values.username, password: values.password }));
+            const response = await dispatch(Login({ Name: values.Name, password: values.password }));
             console.log(response.payload, 'ezaan amin');
             
             if (response.payload.error) {
@@ -43,16 +40,20 @@ function LoginField() {
               localStorage.setItem('access_token', response.payload.access_token);
 
               const data = jwtDecode(response.payload.access_token);
-              console.log(data.role);
-              SetRole(data.role);
+              data.role = data.role.toLowerCase();
+              console.log(data.role, 'EZAAN');
+            
               localStorage.setItem('role', data.role);
 
-
+              // Direct user to respective role page
               if (data.role === 'admin') {
+                SetRole(data.role);
                 navigate('/admin');
-              } else if (data.role === 'manager') {
+              } else if (data.role.toLowerCase().includes('manager')) {
+                SetRole('manager'); 
                 navigate('/manager');
-              } else if (data.role === 'staff') {
+              } else {
+                SetRole('staff');
                 navigate('/staff');
               }
             }
@@ -63,12 +64,12 @@ function LoginField() {
               <div>
                 <Field
                   as={LoginFields}
-                  name="username"
-                  placeholder="Enter Username"
+                  name="Name"
+                  placeholder="Enter Name"
                 />
-                {errors.username && touched.username && (
+                {errors.Name && touched.Name && (
                   <div style={{ color: 'red', fontSize: '12px' }}>
-                    <ErrorMessage name="username" />
+                    <ErrorMessage name="Name" />
                   </div>
                 )}
               </div>
