@@ -16,3 +16,4 @@ __pycache__/
 .ipynb_checkpoints/
 backend/.env
 backend/password.js
+backend/machine_learning_model/dataset/combined_activities.csv
