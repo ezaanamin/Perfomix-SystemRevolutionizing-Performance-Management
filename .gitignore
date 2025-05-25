@@ -17,3 +17,4 @@ __pycache__/
 backend/.env
 backend/password.js
 backend/machine_learning_model/dataset/combined_activities.csv
+backend/machine_learning_model/dataset/combined_activities.csv
