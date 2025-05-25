@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 import mysql.connector
 from mysql.connector import Error
 from flask_cors import CORS
@@ -6,58 +6,61 @@ from dotenv import load_dotenv
 from os import environ
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import pickle
+import numpy as np
 
-# Initialize Flask app
-backend = Flask(__name__)
+
+app = Flask(__name__)
+
+
 load_dotenv()
-CORS(backend)
 
-# Configuring the backend with environment variables
-backend.config['DB_HOST'] = environ.get('DB_HOST')
-backend.config['DB_USER'] = environ.get('DB_USER')
-backend.config['DB_PASSWORD'] = environ.get('DB_PASSWORD')
-backend.config['DB_NAME'] = environ.get('DB_NAME')
-backend.config['JWT_SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
 
-# Initializing JWT
-jwt = JWTManager(backend)
+CORS(app, origins=["http://localhost:3000"])  
 
-# Database connection
+
+app.config['DB_HOST'] = environ.get('DB_HOST')
+app.config['DB_USER'] = environ.get('DB_USER')
+app.config['DB_PASSWORD'] = environ.get('DB_PASSWORD')
+app.config['DB_NAME'] = environ.get('DB_NAME')
+app.config['JWT_SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
+
+
+jwt = JWTManager(app)
+
+
 try:
     mydb = mysql.connector.connect(
-        host=backend.config['DB_HOST'],
-        user=backend.config['DB_USER'],
-        password=backend.config['DB_PASSWORD'],
-        database=backend.config['DB_NAME']
+        host=app.config['DB_HOST'],
+        user=app.config['DB_USER'],
+        password=app.config['DB_PASSWORD'],
+        database=app.config['DB_NAME']
     )
-
     if mydb.is_connected():
         print("✅ Connected to the database")
-
     mycursor = mydb.cursor()
-
 except Error as e:
     print(f"❌ Error while connecting to MySQL: {e}")
 
-# Login route with JWT generation
-@backend.route('/login', methods=['POST'])
+
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    Name = data.get('Name')
+    name = data.get('Name')
     password = data.get('password')
 
-    if not Name or not password:
+    if not name or not password:
         return jsonify({"error": "Name and password are required"}), 400
 
     query = "SELECT Name, Password, Role FROM User WHERE Name = %s;"
-    mycursor.execute(query, (Name,))
+    mycursor.execute(query, (name,))
     user = mycursor.fetchone()
 
     if user:
-        Name_, password_hash, role_ = user
+        name_, password_hash, role_ = user
 
         if check_password_hash(password_hash, password):
-            access_token = create_access_token(identity=Name, additional_claims={'role': role_})
+            access_token = create_access_token(identity=name, additional_claims={'role': role_})
             return jsonify({'message': 'Login Success', 'access_token': access_token, 'expires_in': 3600})
         else:
             return jsonify({"error": "Invalid password"}), 401
@@ -65,9 +68,8 @@ def login():
     return jsonify({"error": "Invalid Name"}), 401
 
 
-@backend.route('/kpi', methods=['GET'])
+@app.route('/kpi', methods=['GET'])
 @jwt_required()
-
 def get_kpis():
     query = "SELECT * FROM KPI;"
     mycursor.execute(query)
@@ -85,23 +87,9 @@ def get_kpis():
 
     return jsonify(kpi_list)
 
-
-# Verify JWT token
-def verify_jwt_token(token):
-    try:
-        secret_key = environ.get('JWT_SECRET_KEY')
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        return payload['sub']
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
-
-
-# Route to add KPIs, requires JWT token
-@backend.route('/new_kpi', methods=['POST'])
+@app.route('/new_kpi', methods=['POST'])
 @jwt_required()
-def add_kpis():
+def add_kpi():
     try:
         data = request.json
         role = data.get('role')
@@ -115,49 +103,45 @@ def add_kpis():
 
         status = 'active'
         insert_query = """
-            INSERT INTO KPIs (role, kpi_name, target, status)
+            INSERT INTO KPI (role, kpi_name, target, status)
             VALUES (%s, %s, %s, %s)
         """
         mycursor.execute(insert_query, (role, kpi_name, target, status))
+        mydb.commit()
+
         return jsonify({'message': 'KPI added successfully', 'data': data}), 201
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# Route to get all users, requires JWT token
-@backend.route('/get_users', methods=['GET'])
+@app.route('/get_users', methods=['GET'])
 @jwt_required()
-def Get_users():
+def get_users():
     try:
-        # SQL query to join the users and team tables and get the necessary information
         query = """
              SELECT 
                 User.UserID, 
                 User.Name, 
                 User.Email, 
                 User.Role, 
-
                 Team.TeamName,
                 Team.ManagerID
             FROM User
             LEFT JOIN Team ON User.TeamID = Team.TeamID;
         """
-        
-        # Execute the query
         mycursor.execute(query)
         users = mycursor.fetchall()
 
         user_list = []
         for user in users:
-            # Append user data along with team information
             user_list.append({
                 "user_id": user[0],
                 "name": user[1],
                 "email": user[2],
                 "role": user[3],
-                "team_name": user[4] if user[4] else 'N/A',  # Handle null team name gracefully
-                "manager_id": user[5] if user[5] else 'N/A',  # Handle null manager ID gracefully
+                "team_name": user[4] if user[4] else 'N/A',
+                "manager_id": user[5] if user[5] else 'N/A',
             })
 
         return jsonify(user_list)
@@ -165,14 +149,12 @@ def Get_users():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# Adding predefined users if they do not already exist
-def add_user_if_not_exists(Name, password, role, TeamID=None):
-    mycursor.execute("SELECT Name FROM User WHERE Name = %s", (Name,))
+def add_user_if_not_exists(name, password, role, team_id=None):
+    mycursor.execute("SELECT Name FROM User WHERE Name = %s", (name,))
     existing_user = mycursor.fetchone()
 
     if not existing_user:
-        email = f"{Name.lower()}@example.com"
+        email = f"{name.lower()}@example.com"
         hashed_password = generate_password_hash(password)
         
         sql_query = """
@@ -180,37 +162,109 @@ def add_user_if_not_exists(Name, password, role, TeamID=None):
         VALUES (%s, %s, %s, %s, %s)
         """
         
-        values = (Name, email, hashed_password, role, TeamID)
+        values = (name, email, hashed_password, role, team_id)
         
         mycursor.execute(sql_query, values)
         mydb.commit()
-        print(f"✅ User '{Name}' added successfully!")
+        print(f"✅ User '{name}' added successfully!")
     else:
-        print(f"⚠️ User '{Name}' already exists, skipping insertion.")
+        print(f"⚠️ User '{name}' already exists, skipping insertion.")
 
 
-# Predefined users list to add to the database
-predefined_User = [
+predefined_users = [
     {"UserID": 1, "Name": "zephyr_manager", "Email": "zephyr_manager@example.com", "Role": "Project Manager", "Password": "Manager$2025!", "TeamID": 2},
     {"UserID": 2, "Name": "nova_staff", "Email": "nova_staff@example.com", "Role": "Staff", "Password": "Staff#2025!", "TeamID": 4},
     {"UserID": 3, "Name": "admin1", "Email": "admin1@example.com", "Role": "Admin", "Password": "Admin@2025", "TeamID": None},
     {"UserID": 4, "Name": "Ali Khan", "Email": "ali.khan@example.com", "Role": "Software Engineer", "Password": "SoftwareEng#2025!", "TeamID": 1},
-    {"UserID": 5, "Name": "Priya Sharma", "Email": "priya.sharma@example.com", "Role": "Project Manager", "Password": "ProjectMngr#2025!", "TeamID": 2},
-    {"UserID": 6, "Name": "Samuel Lee", "Email": "samuel.lee@example.com", "Role": "Business Manager", "Password": "BusinessMgr#2025!", "TeamID": 3},
-    {"UserID": 7, "Name": "Anjali Gupta", "Email": "anjali.gupta@example.com", "Role": "Testing", "Password": "TestingTeam#2025!", "TeamID": 4},
-    {"UserID": 8, "Name": "Michael Johnson", "Email": "michael.johnson@example.com", "Role": "Software Engineer", "Password": "SoftwareEng#2025!", "TeamID": 1},
-    {"UserID": 9, "Name": "Sara Ali", "Email": "sara.ali@example.com", "Role": "Project Manager", "Password": "ProjectMngr#2025!", "TeamID": 2},
-    {"UserID": 10, "Name": "Ravi Patel", "Email": "ravi.patel@example.com", "Role": "Software Engineer", "Password": "SoftwareEng#2025!", "TeamID": 1},
-    {"UserID": 11, "Name": "Sofia Williams", "Email": "sofia.williams@example.com", "Role": "Business Manager", "Password": "BusinessMgr#2025!", "TeamID": 3},
-    {"UserID": 12, "Name": "David Thompson", "Email": "david.thompson@example.com", "Role": "Testing", "Password": "TestingTeam#2025!", "TeamID": 4},
-    {"UserID": 13, "Name": "Zara Hussain", "Email": "zara.hussain@example.com", "Role": "Software Engineer", "Password": "SoftwareEng#2025!", "TeamID": 1},
-    {"UserID": 14, "Name": "Elena Torres", "Email": "elena.torres@example.com", "Role": "Project Manager", "Password": "ProjectMngr#2025!", "TeamID": 5}
+ 
 ]
 
-# Add predefined users
-for user in predefined_User:
+@app.route('/edit_kpi/<int:kpi_id>', methods=['POST'])
+@jwt_required()
+def edit_kpi(kpi_id):
+    print("Updating KPI")
+    try:
+      
+        data = request.get_json()
+        print(data)
+
+        if not data:
+            return jsonify({'error': 'Invalid input, JSON required'}), 400
+
+        # Extract data with validation
+        kpi_name = data.get('kpi')
+        target = data.get('target')
+        status = data.get('status')
+
+        # Validate that all required fields are present
+        if not kpi_name or target is None or not status:
+            return jsonify({'error': 'Missing required fields: kpi_name, target, or status'}), 400
+
+        # Validate target as a decimal number
+        try:
+            target = float(target)
+        except ValueError:
+            return jsonify({'error': 'Target must be a valid decimal number'}), 400
+
+        # Check if status is a valid value (e.g., 'active' or 'inactive')
+        if status not in ['active', 'inactive']:
+            return jsonify({'error': 'Invalid status value. It must be "active" or "inactive".'}), 400
+
+        # Your SQL update query
+        update_query = """
+            UPDATE KPI
+            SET KPIName = %s, TargetValue = %s, Status = %s
+            WHERE KPIID = %s
+        """
+        
+    
+        mycursor.execute(update_query, (kpi_name, target, status, kpi_id))
+        mydb.commit()
+
+        
+        if mycursor.rowcount == 0:
+            return jsonify({"error": "KPI not found or no changes made"}), 404
+
+  
+        return jsonify({'message': 'KPI updated successfully', 'data': data}), 200
+
+    except Exception as e:
+    
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+
+for user in predefined_users:
     add_user_if_not_exists(user["Name"], user["Password"], user["Role"], user["TeamID"])
 
-# Running the Flask app
+
+@app.route('/bot_detection',methods=['POST'])
+# @jwt_required()
+def bot_detection():
+    try:
+        data = request.get_json()
+
+        ordered_keys = [
+            'comment_length', 'issue_id', 'issue_status', 'issue_resolved',
+            'conversation_comments', 'day', 'month', 'year', 'hour', 'minute', 'second',
+            'day_issue_created_date', 'month_issue_created_month', 'year_issue_created_year',
+            'activity_Closing_issue', 'activity_Commenting_issue', 'activity_Opening_issue',
+            'activity_Reopening_issue', 'activity_Transferring_issue'
+        ]
+
+        values = [data.get(key, 0) for key in ordered_keys]
+        arr = np.array(values, dtype=object).reshape(1, 19)
+        pipe = pickle.load(open('/home/ezaan-amin/Documents/PortFolio/Perfomix-SystemRevolutionizing-Performance-Management-main/backend/pipe.pkl','rb'))
+
+        predict = pipe.predict(arr)
+        print(predict)
+        return jsonify({"prediction": int(predict[0])})
+
+    except Exception as e:
+        print("❌ Error:", str(e))
+        return jsonify({"error": str(e)}), 400
+    
+
+    except Exception as e:
+        print("❌ Error:", str(e))
+        return jsonify({"error": str(e)}), 400
 if __name__ == '__main__':
-    backend.run(debug=True)
+    app.run(debug=True)

@@ -312,3 +312,110 @@ export const KPIButton = styled.button`
     font-size: 14px; /* Adjust font size for smaller screens */
   }
 `;
+export const EditKPIModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+`;
+
+export const EditKPIModalContainer = styled.div`
+  background-color: #FFFFFF;
+  padding: 30px;
+  border-radius: 20px;
+  width: 500px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    width: 90%;
+  }
+`;
+
+export const EditKPIModalTitle = styled.h2`
+  color: #2D3A56;
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 24px;
+`;
+
+export const EditKPIInput = styled.input`
+  background-color: #E6F7F7;
+  width: 100%;
+  height: 50px;
+  border-radius: 15px;
+  border: 3px solid #2F8F9D;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+
+  &:focus {
+    outline: none;
+    border-color: ${darken(0.1, '#2F8F9D')};
+  }
+`;
+
+export const EditKPIActions = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  width: 100%;
+`;
+
+export const EditKPIButton = styled.button`
+  flex: 1;
+  background-color: #4361EE;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px;
+  border-radius: 15px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${darken(0.1, '#4361EE')};
+  }
+`;
+
+export const CancelKPIButton = styled.button`
+  flex: 1;
+  background-color: #e0e0e0;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px;
+  border-radius: 15px;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${darken(0.1, '#e0e0e0')};
+  }
+`;
+
+export const CloseEditKPIButton = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #4361EE;
+  cursor: pointer;
+
+  &:hover {
+    color: ${darken(0.1, '#4361EE')};
+  }
+`;

@@ -1,41 +1,44 @@
-import React, { useContext } from "react";
-import { UserContext } from "../ContextState/contextState";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, List, ListItem, ListItemText, Button } from "@mui/material";
 import InsightsIcon from "@mui/icons-material/Insights";
 import DownloadIcon from "@mui/icons-material/Download"; 
-import { useEffect } from "react";
-function AdminDashboard() {
-  const userContext = useContext(UserContext);
-  const { Role } = userContext;
+import { UserContext } from "../ContextState/contextState";
+import ModalUsersGithub from "../components/ModalUsersGithub"
 
+function AdminDashboard() {
+  const { Role } = useContext(UserContext);
   const navigate = useNavigate();
+  const [openGithubModal, setOpenGithubModal] = useState(false); // modal state
 
   useEffect(() => {
-      const accessToken = localStorage.getItem("access_token");
-      if (Role !== 'manager' || !accessToken) {
-          navigate('/');
-      }
-  }, [Role, navigate]); 
+    const accessToken = localStorage.getItem("access_token");
+    if (Role !== 'manager' || !accessToken) {
+      navigate('/');
+    }
+  }, [Role, navigate]);
+
   const COLORS = {
-    lightThemeBackground: "#F5F9FF", // Soft Sky Blue
-    lightThemeText: "#2D3A56", // Dark Navy Blue
-    hoverBackground: "#E6F7F7", // Light Cyan
-    brightBlue: "#4361EE", // Bright Blue for icons and highlights
-    vividOrange: "#FFA600", // Accent color for key elements
-    softCyan: "#80B5FA", // Secondary color
-    greenAccent: "#6abf69", // Green Accent for revenue
+    lightThemeBackground: "#F5F9FF",
+    lightThemeText: "#2D3A56",
+    hoverBackground: "#E6F7F7",
+    brightBlue: "#4361EE",
+    vividOrange: "#FFA600",
+    softCyan: "#80B5FA",
+    greenAccent: "#6abf69",
   };
 
-  // Sample data for monthly rating and number of months
-  const monthlyRating = 85; // Sample rating
-  const numberOfMonths = 12; // Example number of months
+  const monthlyRating = 85;
+  const numberOfMonths = 12;
 
   return (
     <>
-      {/* Top Section with Progress and Reports */}
+      {/* Modal for GitHub Users */}
+      <ModalUsersGithub open={openGithubModal} handleClose={() => setOpenGithubModal(false)} />
+
+      {/* Top Section */}
       <Box display="flex" justifyContent="space-between" gap="20px" backgroundColor={COLORS.lightThemeBackground} padding="20px">
-        {/* Progress Section */}
+        {/* Progress Box */}
         <Box
           height="324px"
           width="412px"
@@ -60,7 +63,7 @@ function AdminDashboard() {
           </Typography>
         </Box>
 
-        {/* Report and Download Section */}
+        {/* Report Box */}
         <Box
           height="324px"
           width="412px"
@@ -77,8 +80,6 @@ function AdminDashboard() {
             <DownloadIcon fontSize="large" style={{ color: COLORS.vividOrange, marginRight: "8px" }} />
             Report and Download Report
           </Typography>
-
-          {/* Download Button */}
           <Button
             variant="contained"
             color="primary"
@@ -101,7 +102,7 @@ function AdminDashboard() {
         </Box>
       </Box>
 
-      {/* Line Manager Menu */}
+      {/* Quick Links */}
       <Box
         display="flex"
         justifyContent="center"
@@ -116,60 +117,16 @@ function AdminDashboard() {
           <Typography variant="h5" fontWeight="600" color={COLORS.lightThemeText} sx={{ marginBottom: "15px" }}>
             Quick Links
           </Typography>
-          
-          {/* Menu Item 1 */}
-          <ListItem
-            button
-            onClick={() => navigate("/performance-reports")}
-            sx={{
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: COLORS.softCyan,
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                transform: "scale(1.05)",
-                transition: "all 0.3s ease-in-out",
-              },
-              padding: "12px 20px",
-              marginBottom: "10px",
-            }}
-          >
+
+          <ListItem button onClick={() => navigate("/performance-reports")} sx={quickLinkStyle(COLORS)}>
             <ListItemText primary="Performance Reports" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
           </ListItem>
-          
-          {/* Menu Item 2 */}
-          <ListItem
-            button
-            onClick={() => navigate("/anomaly-detection")}
-            sx={{
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: COLORS.softCyan,
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                transform: "scale(1.05)",
-                transition: "all 0.3s ease-in-out",
-              },
-              padding: "12px 20px",
-              marginBottom: "10px",
-            }}
-          >
-            <ListItemText primary="Anomaly Detection" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
+
+          <ListItem button onClick={() => setOpenGithubModal(true)} sx={quickLinkStyle(COLORS)}>
+            <ListItemText primary="Bot Detection" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
           </ListItem>
-          
-          {/* Menu Item 3 */}
-          <ListItem
-            button
-            onClick={() => navigate("/recommendations")}
-            sx={{
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: COLORS.softCyan,
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                transform: "scale(1.05)",
-                transition: "all 0.3s ease-in-out",
-              },
-              padding: "12px 20px",
-            }}
-          >
+
+          <ListItem button onClick={() => navigate("/recommendations")} sx={quickLinkStyle(COLORS)}>
             <ListItemText primary="Recommendations" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
           </ListItem>
         </List>
@@ -177,5 +134,17 @@ function AdminDashboard() {
     </>
   );
 }
+
+const quickLinkStyle = (COLORS) => ({
+  borderRadius: "8px",
+  "&:hover": {
+    backgroundColor: COLORS.softCyan,
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transform: "scale(1.05)",
+    transition: "all 0.3s ease-in-out",
+  },
+  padding: "12px 20px",
+  marginBottom: "10px",
+});
 
 export default AdminDashboard;
