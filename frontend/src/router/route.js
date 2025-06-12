@@ -9,6 +9,9 @@ import Topbar from '../components/TopBar'; // Import Topbar
 import { Box } from '@mui/material';
 import KPI from '../components/KPI';
 import Users from '../components/Users';
+import PerformanceGrid from '../components/PerformanceGrid';
+import RecommendationsGrid from "../components/RecommendationsGrid"
+import InsightChart from '../components/InsightChart';
 
 function AppRoutes() {
     return (
@@ -67,6 +70,29 @@ function AppRoutes() {
                             <Box flex={1} display="flex" flexDirection="column">
                                 <Topbar />
                            <Users/>
+                            </Box>
+                        </Box>} />
+
+                             <Route path="/reports" element={    <Box display="flex" height="100vh">
+                            <SidebarAdmin />
+                            <Box flex={1} display="flex" flexDirection="column">
+                                <Topbar />
+                           <PerformanceGrid/>
+                            </Box>
+                        </Box>} />
+                          <Route path="/recommendations" element={    <Box display="flex" height="100vh">
+                            <SidebarAdmin />
+                            <Box flex={1} display="flex" flexDirection="column">
+                                <Topbar />
+                           <RecommendationsGrid/>
+                            </Box>
+                        </Box>} />
+
+                            <Route path="/insights" element={    <Box display="flex" height="100vh">
+                            <SidebarAdmin />
+                            <Box flex={1} display="flex" flexDirection="column">
+                                <Topbar />
+                           <InsightChart/>
                             </Box>
                         </Box>} />
 

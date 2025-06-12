@@ -1,68 +1,96 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, CircularProgress, Typography, Box
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Box,
 } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import WarningIcon from "@mui/icons-material/Warning";
-import { useDispatch } from "react-redux";
-import { Bot_Detection } from "../API/slice/API"
 
-function BotDetectionResult({ open, handleClose, metadata }) {
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const dispatch = useDispatch();
+function BotDetectionResult({ open, handleClose, metadata, prediction }) {
+  // Extract prediction value and message from backend response
+  let predValue = null;
+  let message = "";
 
-  useEffect(() => {
-    runBotDetection();
-  }, []);
-
-  const runBotDetection = async () => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const res = await dispatch(Bot_Detection(metadata)).unwrap(); // unpacks the returned payload
-      setResult(res.prediction === 1 ? "human" : "bot");
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
+  if (prediction !== null && prediction !== undefined) {
+    if (typeof prediction === "object") {
+      predValue = prediction.prediction;
+      message = prediction.message || "";
+    } else {
+      predValue = prediction;
+      message = "";
     }
-  };
+  }
+
+  // Valid prediction values are 0 or 1
+  const hasPrediction = predValue === 0 || predValue === 1;
+
+  // Interpret 1 as Bot Detected, 0 as Human
+  const isBot = predValue === 1;
+
+  // Check if detection was already done today by message text
+  const isDetectionDoneToday = message === "Bot detection was already done today.";
+
+  // Format metadata keys for display (capitalize words)
+  const formattedData = Object.entries(metadata || {}).map(([key, value]) => ({
+    label: key
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase()),
+    value,
+  }));
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Bot Detection Result</DialogTitle>
-      <DialogContent dividers>
-        <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
-          {loading && <CircularProgress />}
-          {error && <Typography color="error">{error}</Typography>}
-          {!loading && result && (
-            <>
-              {result === "human" ? (
-                <>
-                  <CheckCircleIcon sx={{ fontSize: 60, color: "green" }} />
-                  <Typography variant="h5" fontWeight="bold" mt={2}>
-                     Human Detected
-                  </Typography>
-                </>
-              ) : (
-                <>
-                  <WarningIcon sx={{ fontSize: 60, color: "red" }} />
-                  <Typography variant="h5" fontWeight="bold" mt={2}>
-                    Bot Detected
-                  </Typography>
-                </>
-              )}
-            </>
-          )}
-        </Box>
+      <DialogTitle>Bot Detection Analysis</DialogTitle>
+      <DialogContent dividers sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+        {/* Always show backend message */}
+        <Typography variant="body1" gutterBottom>
+          {message || "No message provided."}
+        </Typography>
+
+        {/* Show prediction result if available */}
+        {hasPrediction && (
+          <Box my={2}>
+            <Typography variant="h6">
+              Prediction:{" "}
+              <span style={{ color: isBot ? "red" : "green" }}>
+                {isBot ? "Bot Detected (Yes)" : "Human (No Bot)"}
+              </span>
+            </Typography>
+          </Box>
+        )}
+
+        {/* Show metadata details only if detection NOT done today */}
+     
+          <>
+            <Divider sx={{ my: 2 }} />
+            <List dense>
+              {formattedData.map((item, idx) => (
+                <React.Fragment key={idx}>
+                  <ListItem>
+                    <ListItemText
+                      primary={item.label}
+                      secondary={String(item.value)}
+                      primaryTypographyProps={{ fontWeight: 600 }}
+                    />
+                  </ListItem>
+                  {idx !== formattedData.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          </>
+   
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose}>Close</Button>
+        <Button onClick={handleClose} variant="contained">
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

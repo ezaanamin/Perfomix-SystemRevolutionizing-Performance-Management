@@ -1,20 +1,29 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, List, ListItem, ListItemText, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Button
+} from "@mui/material";
 import InsightsIcon from "@mui/icons-material/Insights";
-import DownloadIcon from "@mui/icons-material/Download"; 
+import DownloadIcon from "@mui/icons-material/Download";
 import { UserContext } from "../ContextState/contextState";
-import ModalUsersGithub from "../components/ModalUsersGithub"
+// import ModalUsersGithub from "../components/ModalUsersGithub";
+// import ModalPerformanceReport from "../components/ModalPerformanceReport";
 
-function AdminDashboard() {
+function ManagerDashboard() {
   const { Role } = useContext(UserContext);
   const navigate = useNavigate();
-  const [openGithubModal, setOpenGithubModal] = useState(false); // modal state
+  const [openGithubModal, setOpenGithubModal] = useState(false);
+  const [openPerformanceModal, setOpenPerformanceModal] = useState(false);
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token");
-    if (Role !== 'manager' || !accessToken) {
-      navigate('/');
+    if (Role !== "manager" || !accessToken) {
+      navigate("/");
     }
   }, [Role, navigate]);
 
@@ -33,8 +42,9 @@ function AdminDashboard() {
 
   return (
     <>
-      {/* Modal for GitHub Users */}
-      <ModalUsersGithub open={openGithubModal} handleClose={() => setOpenGithubModal(false)} />
+      {/* Modals */}
+      {/* <ModalUsersGithub open={openGithubModal} handleClose={() => setOpenGithubModal(false)} /> */}
+      {/* <ModalPerformanceReport open={openPerformanceModal} handleClose={() => setOpenPerformanceModal(false)} /> */}
 
       {/* Top Section */}
       <Box display="flex" justifyContent="space-between" gap="20px" backgroundColor={COLORS.lightThemeBackground} padding="20px">
@@ -118,14 +128,17 @@ function AdminDashboard() {
             Quick Links
           </Typography>
 
-          <ListItem button onClick={() => navigate("/performance-reports")} sx={quickLinkStyle(COLORS)}>
+          {/* Open Performance Modal */}
+          <ListItem button onClick={() => setOpenPerformanceModal(true)} sx={quickLinkStyle(COLORS)}>
             <ListItemText primary="Performance Reports" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
           </ListItem>
 
+          {/* GitHub Bot Detection */}
           <ListItem button onClick={() => setOpenGithubModal(true)} sx={quickLinkStyle(COLORS)}>
             <ListItemText primary="Bot Detection" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
           </ListItem>
 
+          {/* Recommendations Page */}
           <ListItem button onClick={() => navigate("/recommendations")} sx={quickLinkStyle(COLORS)}>
             <ListItemText primary="Recommendations" sx={{ fontWeight: "500", color: COLORS.lightThemeText }} />
           </ListItem>
@@ -147,4 +160,4 @@ const quickLinkStyle = (COLORS) => ({
   marginBottom: "10px",
 });
 
-export default AdminDashboard;
+export default ManagerDashboard;
