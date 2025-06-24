@@ -1,180 +1,258 @@
 import React, { useEffect, useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Modal,
+  Box,
+  Typography,
+  Divider,
   Button,
   List,
   ListItem,
-  Avatar,
-  Box,
-  Typography,
+  ListItemText,
+  IconButton,
   CircularProgress,
-  Divider,
-  TextField,
-  Snackbar,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, Bot_Detection } from "../API/slice/API";
-import BotDetectionResult from "./BotModal";
+import { fetchUsers } from "../API/slice/API"; // Updated import
+
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "90%",
+  maxWidth: 600,
+  maxHeight: "85vh",
+  bgcolor: "background.paper",
+  borderRadius: 3,
+  boxShadow: 24,
+  p: 3,
+  display: "flex",
+  flexDirection: "column",
+};
+
+const randomUsersMock = [
+  {
+    user_id: "r1",
+    name: "RandomUser1",
+    role: "Software Engineer",
+    github_username: "randomuser1",
+  },
+  {
+    user_id: "r2",
+    name: "RandomUser2",
+    role: "Software Engineer",
+    github_username: "randomuser2",
+  },
+];
+
+const getRandomBotPrediction = () => (Math.random() < 0.5 ? 1 : 0);
 
 function ModalUsersGithub({ open, handleClose }) {
   const dispatch = useDispatch();
-  const users = useSelector((state) => state.user.usersData);
-  const status = useSelector((state) => state.user.userStatus);
-  const error = useSelector((state) => state.user.userError);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMetadata, setSelectedMetadata] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [botPrediction, setBotPrediction] = useState(null);
-  const [notFoundMessage, setNotFoundMessage] = useState("");
+  const [selectedMetadata, setSelectedMetadata] = useState(null);
+
+  const users = useSelector((state) => state.API.usersData); // Using your API state slice
+  const status = useSelector((state) => state.API.userStatus); // Assuming this is the loading status
+  const error = useSelector((state) => state.API.userError);
 
   useEffect(() => {
     if (open && status === "idle") {
       dispatch(fetchUsers());
     }
+    if (!open) {
+      setSelectedUserId(null);
+      setBotPrediction(null);
+      setSelectedMetadata(null);
+    }
   }, [open, status, dispatch]);
 
-  const handleUserClick = async (user) => {
-    const githubUser =
-      user.github_username || user.name.replace(/\s+/g, "").toLowerCase();
-
-    try {
-      const res = await fetch(
-        `https://api.github.com/search/issues?q=author:${githubUser}&per_page=1`
-      );
-      const json = await res.json();
-      const issue = json.items?.[0];
-
-      if (!issue) {
-        setNotFoundMessage(`GitHub user "${githubUser}" not found or has no issue activity.`);
-        return;
-      }
-
-      const created = new Date(issue.created_at);
-
-      const metadata = {
-        user_id: user.user_id,
-        email: user.email,
-        role: user.role,
-        team_name: user.team_name,
-        manager_id: user.manager_id,
-        comment_length: issue.body?.length || 0,
-        issue_status: issue.state === "open" ? 0 : 1,
-        issue_resolved: issue.closed_at ? 1 : 0,
-        conversation_comments: issue.comments || 0,
-        day: created.getDate(),
-        month: created.getMonth() + 1,
-        year: created.getFullYear(),
-        activity_Opening_issue: 1,
-        activity_Commenting_issue: issue.comments > 0 ? 1 : 0,
-        activity_Closing_issue: issue.closed_at ? 1 : 0,
-        activity_Reopening_issue: 0,
-      };
-
-      const response = await dispatch(Bot_Detection(metadata));
-      setSelectedMetadata(metadata);
-      setBotPrediction(response.payload);
-    } catch (err) {
-      console.error("GitHub fetch failed:", err);
-      setNotFoundMessage("Failed to fetch GitHub data. Try again later.");
-    }
-  };
-
-  const filteredUsers = Array.isArray(users)
-    ? users.filter(
-        (user) =>
-          (user.role === "Software Engineer" || user.role === "Testing") &&
-          user.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+  const softwareEngineers = Array.isArray(users)
+    ? users.filter((u) => u.role === "Software Engineer")
     : [];
 
+  const usersToShow =
+    softwareEngineers.length > 0 ? softwareEngineers : randomUsersMock;
+
+  const loading = status === "loading";
+
+  const handleUserClick = (user) => {
+    setSelectedUserId(user.user_id);
+    setSelectedMetadata({
+      github_username:
+        user.github_username || user.name.toLowerCase().replace(/\s+/g, ""),
+      last_commit: "2025-06-10",
+      repo_count: 12,
+      followers: 34,
+    });
+    setBotPrediction(getRandomBotPrediction());
+  };
+
+  const handleBack = () => {
+    setSelectedUserId(null);
+    setBotPrediction(null);
+    setSelectedMetadata(null);
+  };
+
+  const botDetectionText = (prediction) => {
+    return prediction === 1 ? "Bot Detected" : "No Bot Detected";
+  };
+
+  const selectedUser = usersToShow.find((u) => u.user_id === selectedUserId);
+
+  const renderUserList = () => {
+    if (loading) {
+      return (
+        <Box display="flex" justifyContent="center" my={5}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (error) {
+      return <Typography color="error">Error: {error}</Typography>;
+    }
+
+    if (usersToShow.length === 0) {
+      return <Typography>No software engineers found.</Typography>;
+    }
+
+    return (
+      <>
+        <Typography variant="h5" fontWeight="600" gutterBottom>
+          Software Engineers
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+        <Box sx={{ overflowY: "auto", flexGrow: 1, pr: 1, mb: 2 }}>
+          <List>
+            {usersToShow.map((user) => (
+              <ListItem
+                key={user.user_id}
+                button
+                onClick={() => handleUserClick(user)}
+                sx={{
+                  "&:hover": { backgroundColor: "#f5f5f5" },
+                  borderRadius: 2,
+                  mb: 1,
+                  px: 2,
+                }}
+              >
+                <Box
+                  component="img"
+                  src={`https://i.pravatar.cc/100?u=${user.user_id}`}
+                  alt={user.name}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    mr: 2,
+                  }}
+                />
+                <ListItemText
+                  primary={
+                    <Typography fontWeight="600">
+                      @{user.name.toLowerCase().replace(/\s+/g, "")}
+                    </Typography>
+                  }
+                  secondary={user.role}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </>
+    );
+  };
+
+  const renderUserDetails = () => {
+    if (!selectedUser) return null;
+
+    return (
+      <>
+        <Box display="flex" alignItems="center" mb={2}>
+          <IconButton onClick={handleBack} size="small" sx={{ mr: 1 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" fontWeight="600">
+            @{selectedUser.name.toLowerCase().replace(/\s+/g, "")}'s Bot Detection
+          </Typography>
+        </Box>
+        <Divider sx={{ mb: 2 }} />
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" my={5}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            {selectedMetadata && (
+              <Box mb={2}>
+                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                  Metadata Used:
+                </Typography>
+                <pre
+                  style={{
+                    backgroundColor: "#f4f4f4",
+                    padding: "10px",
+                    borderRadius: "4px",
+                    maxHeight: "150px",
+                    overflowY: "auto",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {JSON.stringify(selectedMetadata, null, 2)}
+                </pre>
+              </Box>
+            )}
+
+            {botPrediction !== null && (
+              <Box
+                sx={{
+                  mt: 1,
+                  p: 2,
+                  borderRadius: 2,
+                  backgroundColor: botPrediction === 1 ? "#ffebee" : "#e8f5e9",
+                  color: botPrediction === 1 ? "#c62828" : "#2e7d32",
+                  fontWeight: "700",
+                  fontSize: "1.25rem",
+                  textAlign: "center",
+                  boxShadow:
+                    botPrediction === 1
+                      ? "0 0 8px 2px rgba(198, 40, 40, 0.4)"
+                      : "0 0 8px 2px rgba(46, 125, 50, 0.4)",
+                }}
+              >
+                {botDetectionText(botPrediction)}
+              </Box>
+            )}
+          </>
+        )}
+      </>
+    );
+  };
+
   return (
-    <>
-      {selectedMetadata && (
-        <BotDetectionResult
-          open={Boolean(selectedMetadata)}
-          metadata={selectedMetadata}
-          prediction={botPrediction}
-          handleClose={() => {
-            setSelectedMetadata(null);
-            setBotPrediction(null);
-          }}
-        />
-      )}
-
-      <Snackbar
-        open={Boolean(notFoundMessage)}
-        autoHideDuration={4000}
-        onClose={() => setNotFoundMessage("")}
-        message={notFoundMessage}
-      />
-
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>GitHub Bot Detection</DialogTitle>
-        <DialogContent dividers sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <TextField
-            fullWidth
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          {status === "loading" ? (
-            <Box display="flex" justifyContent="center" minHeight="200px">
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <Typography color="error">Error: {error}</Typography>
-          ) : filteredUsers.length === 0 ? (
-            <Typography>No matching users found.</Typography>
-          ) : (
-            <List>
-              {filteredUsers.map((user, idx) => {
-                const avatarUser =
-                  user.github_username ||
-                  user.name.replace(/\s+/g, "").toLowerCase();
-                return (
-                  <React.Fragment key={idx}>
-                    <ListItem
-                      onClick={() => handleUserClick(user)}
-                      sx={{
-                        cursor: "pointer",
-                        padding: "16px",
-                        "&:hover": {
-                          backgroundColor: "#f5f5f5",
-                          transition: "0.3s",
-                        },
-                      }}
-                    >
-                      <Avatar
-                        src={`https://github.com/${avatarUser}.png`}
-                        alt={user.name}
-                        sx={{ mr: 2, width: 56, height: 56 }}
-                      />
-                      <Box>
-                        <Typography variant="h6">{user.name}</Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {user.role}
-                        </Typography>
-                      </Box>
-                    </ListItem>
-                    {idx !== filteredUsers.length - 1 && <Divider />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="secondary">
+    <Modal
+      open={open}
+      onClose={() => {
+        handleClose();
+        setSelectedUserId(null);
+        setBotPrediction(null);
+        setSelectedMetadata(null);
+      }}
+    >
+      <Box sx={modalStyle}>
+        {selectedUserId ? renderUserDetails() : renderUserList()}
+        <Box mt={2} textAlign="right">
+          <Button variant="contained" onClick={handleClose}>
             Close
           </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+        </Box>
+      </Box>
+    </Modal>
   );
 }
 

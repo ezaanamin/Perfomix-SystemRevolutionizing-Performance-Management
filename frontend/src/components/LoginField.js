@@ -38,13 +38,24 @@ function LoginField() {
 
             if (response.payload.access_token) {
               localStorage.setItem('access_token', response.payload.access_token);
-
+                
               const data = jwtDecode(response.payload.access_token);
               data.role = data.role.toLowerCase();
               console.log(data.role, 'EZAAN');
+              const expirationTime = data.exp * 1000; // convert to ms
+               localStorage.setItem('token_expiration', expirationTime);
+
+              localStorage.setItem('role', data.role);
             
               localStorage.setItem('role', data.role);
-
+  const timeRemaining = expirationTime - Date.now();
+  setTimeout(() => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('token_expiration');
+    SetRole(null);
+    navigate('/login');
+  }, timeRemaining);
               // Direct user to respective role page
               if (data.role === 'admin') {
                 SetRole(data.role);

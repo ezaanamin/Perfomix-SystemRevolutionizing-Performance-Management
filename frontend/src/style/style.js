@@ -419,3 +419,73 @@ export const CloseEditKPIButton = styled.button`
     color: ${darken(0.1, '#4361EE')};
   }
 `;
+
+
+export const SettingsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 100px;
+  background-color: #F0F7FF;
+  height: 100vh;
+`;
+
+export const SettingsTitle = styled.h1`
+  font-size: 36px;
+  font-weight: bold;
+  color: #2D3A56;
+  margin-bottom: 40px;
+`;
+
+export const SettingsForm = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 600px;
+
+  @media (max-width: 768px) {
+    width: 90%;
+  }
+`;
+
+export const SettingsInput = styled.input`
+  background-color: #E6F7F7;
+  height: 62px;
+  border-radius: 20px;
+  border: 3px solid #2F8F9D;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+
+  &::placeholder {
+    color: #999;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${darken(0.1, '#2F8F9D')};
+  }
+`;
+
+export const SaveButton = styled.button`
+  background-color: rgba(67, 97, 238, 0.8);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: 62px;
+  border-radius: 20px;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${darken(0.1, 'rgba(67, 97, 238, 0.8)')};
+  }
+`;
+
+export const SuccessMessage = styled.p`
+  color: #4361EE;
+  font-weight: bold;
+  margin-top: 20px;
+`;

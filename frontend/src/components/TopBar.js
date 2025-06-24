@@ -1,13 +1,32 @@
-import { Box, IconButton, InputBase, Typography } from "@mui/material";
+import { Box, IconButton, InputBase, Typography, Menu, MenuItem } from "@mui/material";
 import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Topbar = () => {
-  const primaryColor = "#4B7DE7"; // Main color used for text/icons
-  const secondaryColor = "#80B5FA"; // Lighter background color
-  
+  const primaryColor = "#4B7DE7";
+  const secondaryColor = "#80B5FA";
+  const navigate = useNavigate();
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
   return (
     <Box 
       display="flex" 
@@ -38,9 +57,36 @@ const Topbar = () => {
         <IconButton>
           <SettingsOutlinedIcon sx={{ color: primaryColor }} />
         </IconButton>
-        <IconButton>
+        <IconButton onClick={handleClick}>
           <PersonOutlinedIcon sx={{ color: primaryColor }} />
         </IconButton>
+
+        {/* Dropdown Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          PaperProps={{
+            elevation: 6,
+            sx: {
+              borderRadius: 2,
+              backgroundColor: "#f0f6ff",
+              color: primaryColor,
+              minWidth: 150,
+              '& .MuiMenuItem-root': {
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: "#d9e9ff",
+                  color: "#003c8f",
+                },
+              },
+            },
+          }}
+        >
+          <MenuItem onClick={handleLogout}>
+            🚪 Logout
+          </MenuItem>
+        </Menu>
       </Box>
     </Box>
   );

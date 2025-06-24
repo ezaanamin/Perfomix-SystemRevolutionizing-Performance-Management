@@ -12,6 +12,7 @@ import Users from '../components/Users';
 import PerformanceGrid from '../components/PerformanceGrid';
 import RecommendationsGrid from "../components/RecommendationsGrid"
 import InsightChart from '../components/InsightChart';
+import Setting from '../pages/Setting';
 
 function AppRoutes() {
     return (
@@ -93,6 +94,14 @@ function AppRoutes() {
                             <Box flex={1} display="flex" flexDirection="column">
                                 <Topbar />
                            <InsightChart/>
+                            </Box>
+                        </Box>} />
+
+                             <Route path="/settings" element={    <Box display="flex" height="100vh">
+                            <SidebarAdmin />
+                            <Box flex={1} display="flex" flexDirection="column">
+                                <Topbar />
+               <Setting/>
                             </Box>
                         </Box>} />
 

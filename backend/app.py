@@ -46,7 +46,9 @@ app.config['JIRA_PROJECT_KEY'] = environ.get('JIRA_PROJECT_KEY') # Example: 'PRO
 
 jwt = JWTManager(app)
 
-
+def get_db_connection_and_cursor():
+    db = get_db_connection()  # Your existing connection provider
+    return db, db.cursor()
 try:
     mydb = mysql.connector.connect(
         host=app.config['DB_HOST'],
@@ -85,6 +87,8 @@ def save_detected_kpi(kpi_id, detected_value, user_id=None):
             SELECT KPIDataID FROM KPIData 
             WHERE KPIID = %s AND UserID = %s AND DetectionDate = %s
         """
+        db = get_db_connection()
+        mycursor = db.cursor()
         # Ensure user_id is None if not applicable, as MySQL treats NULL differently
         user_id_param = user_id if user_id is not None else None 
         mycursor.execute(check_query, (kpi_id, user_id_param, detection_date))
@@ -219,6 +223,8 @@ def _detect_kpi_code_quality(user_id, repo_owner, repo_name):
     """
     kpi_name = 'Code Quality'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -241,6 +247,8 @@ def _detect_kpi_code_efficiency(user_id, user_email):
     """
     kpi_name = 'Code Efficiency'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -259,7 +267,11 @@ def _detect_kpi_commit_frequency(user_id, github_username):
     """
     kpi_name = 'Commit Frequency'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
+
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
+
     result = mycursor.fetchone()
     if result:
         kpi_id = result[0]
@@ -278,6 +290,8 @@ def _detect_kpi_task_completion_rate(user_id, jira_user_email, jira_project_key)
     """
     kpi_name = 'Task Completion Rate'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -297,6 +311,9 @@ def _detect_kpi_milestone_achievement_rate(user_id, project_id=None):
     """
     kpi_name = 'Milestone Achievement Rate'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
+
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -314,6 +331,8 @@ def _detect_kpi_budget_utilization(user_id, project_id=None):
     """
     kpi_name = 'Budget Utilization'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -331,6 +350,8 @@ def _detect_kpi_resource_allocation(user_id, team_id=None):
     """
     kpi_name = 'Resource Allocation'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -348,6 +369,8 @@ def _detect_kpi_revenue_growth(user_id, period='quarterly'):
     """
     kpi_name = 'Revenue Growth'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -365,6 +388,8 @@ def _detect_kpi_customer_satisfaction(user_id, region=None):
     """
     kpi_name = 'Customer Satisfaction'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -383,6 +408,8 @@ def _detect_kpi_operational_efficiency(user_id, process_type=None):
     """
     kpi_name = 'Operational Efficiency'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -402,6 +429,8 @@ def _detect_kpi_test_case_coverage(user_id, project_id):
     """
     kpi_name = 'Test Case Coverage'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -420,6 +449,8 @@ def _detect_kpi_bug_detection_rate(user_id, project_key):
     """
     kpi_name = 'Bug Detection Rate'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -438,6 +469,8 @@ def _detect_kpi_test_execution_time(user_id, pipeline_id=None):
     """
     kpi_name = 'Test Execution Time'
     kpi_id = None
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s", (kpi_name,))
     result = mycursor.fetchone()
     if result:
@@ -460,6 +493,8 @@ def login():
         return jsonify({"error": "Name and password are required"}), 400
 
     query = "SELECT Name, Password, Role FROM User WHERE Name = %s;"
+    db = get_db_connection()
+    mycursor = db.cursor()
     mycursor.execute(query, (name,))
     user = mycursor.fetchone()
 
@@ -478,7 +513,8 @@ def login():
 @jwt_required()
 def get_kpis():
 
-    
+    db = get_db_connection()
+    mycursor = db.cursor()
     query = "SELECT * FROM KPI;"
     mycursor.execute(query)
     kpis = mycursor.fetchall()
@@ -504,6 +540,8 @@ def add_kpi():
         role = data.get('role')
         kpi_name = data.get('kpi')
         target = data.get('target')
+        db = get_db_connection()
+        mycursor = db.cursor()
 
         try:
             target = float(target)
@@ -576,31 +614,33 @@ def get_users():
         print(f"❌ Error fetching users: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-def add_user_if_not_exists(name, password, role, team_id=None):
-    # Ensure mydb and mycursor are accessible
-    global mydb, mycursor
-    try:
-        mycursor.execute("SELECT Name FROM User WHERE Name = %s", (name,))
-        existing_user = mycursor.fetchone()
+# def add_user_if_not_exists(name, password, role, team_id=None):
+#     # Ensure mydb and mycursor are accessible
+   
+#     try:
+#         db = get_db_connection()
+#         mycursor = db.cursor()
+#         mycursor.execute("SELECT Name FROM User WHERE Name = %s", (name,))
+#         existing_user = mycursor.fetchone()
 
-        if not existing_user:
-            email = f"{name.lower().replace(' ', '.')}@example.com" # Generate email from name
-            hashed_password = generate_password_hash(password)
+#         if not existing_user:
+#             email = f"{name.lower().replace(' ', '.')}@example.com" # Generate email from name
+#             hashed_password = generate_password_hash(password)
             
-            sql_query = """
-            INSERT INTO User (Name, Email, Password, Role, TeamID)
-            VALUES (%s, %s, %s, %s, %s)
-            """
+#             sql_query = """
+#             INSERT INTO User (Name, Email, Password, Role, TeamID)
+#             VALUES (%s, %s, %s, %s, %s)
+#             """
             
-            values = (name, email, hashed_password, role, team_id)
+#             values = (name, email, hashed_password, role, team_id)
             
-            mycursor.execute(sql_query, values)
-            mydb.commit()
-            print(f"✅ User '{name}' added successfully!")
-        else:
-            print(f"⚠️ User '{name}' already exists, skipping insertion.")
-    except Exception as e:
-        print(f"❌ Error adding user '{name}': {e}")
+#             mycursor.execute(sql_query, values)
+#             mydb.commit()
+#             print(f"✅ User '{name}' added successfully!")
+#         else:
+#             print(f"⚠️ User '{name}' already exists, skipping insertion.")
+#     except Exception as e:
+#         print(f"❌ Error adding user '{name}': {e}")
 
 
 predefined_users = [
@@ -623,6 +663,8 @@ def edit_kpi(kpi_id):
       
         data = request.get_json()
         print(data)
+        db = get_db_connection()
+        mycursor = db.cursor()
 
         if not data:
             return jsonify({'error': 'Invalid input, JSON required'}), 400
@@ -669,16 +711,16 @@ def edit_kpi(kpi_id):
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
 # This loop ensures predefined users are added when the app starts
-with app.app_context(): # Ensure app context for database operations
-    for user in predefined_users:
-        # Before adding, ensure TeamID exists if specified
-        if user["TeamID"] is not None:
-            mycursor.execute("SELECT TeamID FROM Team WHERE TeamID = %s", (user["TeamID"],))
-            if mycursor.fetchone() is None:
-                print(f"⚠️ TeamID {user['TeamID']} for user {user['Name']} does not exist. Skipping user creation or handle gracefully.")
-                continue # Skip user if team doesn't exist
+# with app.app_context(): # Ensure app context for database operations
+#     for user in predefined_users:
+#         # Before adding, ensure TeamID exists if specified
+#         if user["TeamID"] is not None:
+#             mycursor.execute("SELECT TeamID FROM Team WHERE TeamID = %s", (user["TeamID"],))
+#             if mycursor.fetchone() is None:
+#                 print(f"⚠️ TeamID {user['TeamID']} for user {user['Name']} does not exist. Skipping user creation or handle gracefully.")
+#                 continue # Skip user if team doesn't exist
         
-        add_user_if_not_exists(user["Name"], user["Password"], user["Role"], user["TeamID"])
+#         add_user_if_not_exists(user["Name"], user["Password"], user["Role"], user["TeamID"])
 
 
 @app.route('/bot_detection',methods=['POST'])
@@ -687,6 +729,8 @@ def bot_detection():
     try:
         data = request.get_json()
         user_id = data.get('user_id')
+        db = get_db_connection()
+        mycursor = db.cursor()
 
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
@@ -752,6 +796,8 @@ def bot_detection():
 
 def get_active_kpis_for_role(role):
     try:
+        db = get_db_connection()
+        mycursor = db.cursor()
         mycursor.execute("SELECT KPIName FROM KPI WHERE Role = %s AND Status = 'active'", (role,))
         return [row[0] for row in mycursor.fetchall()]
     except Exception as e:
@@ -761,6 +807,8 @@ def get_active_kpis_for_role(role):
 
 def save_performance_data(user_id, kpi_name, role, actual_value):
     try:
+        db = get_db_connection()
+        mycursor = db.cursor()
         mycursor.execute("SELECT KPIID FROM KPI WHERE KPIName = %s AND Role = %s", (kpi_name, role))
         kpi_id_row = mycursor.fetchone()
         if not kpi_id_row:
@@ -881,6 +929,8 @@ def _detect_kpi_test_execution_time(user_id):
 
 def detect_and_save_kpis(user_id, role, detection_functions):
     try:
+        db = get_db_connection()
+        mycursor = db.cursor()
         mycursor.execute("SELECT Name, Email FROM User WHERE UserID = %s AND Role = %s", (user_id, role))
         user = mycursor.fetchone()
         if not user:
@@ -982,6 +1032,8 @@ def detect_testing_team_kpis(user_id):
 @app.route('/kpi_data', methods=['GET'])
 @jwt_required()
 def get_kpi_data():
+    db = get_db_connection()
+    mycursor = db.cursor()
     """
     Fetches stored detected KPI data.
     Allows filtering by KPI name, role, user ID, and date range.
@@ -1165,7 +1217,6 @@ def get_performance_insights():
         mydb = get_db_connection()
         mycursor = mydb.cursor()
 
-        # Performance distribution counts
         performance_query = """
             SELECT
                 SUM(CASE WHEN (pd.ActualValue / k.TargetValue) < 0.5 THEN 1 ELSE 0 END) AS Under_50,
@@ -1175,9 +1226,8 @@ def get_performance_insights():
             JOIN KPI k ON pd.KPIID = k.KPIID;
         """
         mycursor.execute(performance_query)
-        perf_counts = mycursor.fetchone()
+        perf_counts = mycursor.fetchone() or (0, 0, 0)
 
-        # KPI distribution (count of low-performing entries per KPI)
         kpi_query = """
             SELECT 
                 k.KPIName,
@@ -1201,6 +1251,9 @@ def get_performance_insights():
             ]
         }
 
+        mycursor.close()
+        mydb.close()
+
         return jsonify(result)
 
     except Exception as e:
@@ -1208,6 +1261,66 @@ def get_performance_insights():
         return jsonify({"error": str(e)}), 500
 
 
+
+@app.route('/update_settings', methods=['POST'])
+@jwt_required()
+def update_settings():
+    data = request.get_json()
+    print("Received update data:", data)
+
+    username = data.get('username')
+    email = data.get('email')  # new email field
+    old_password = data.get('old_password') or data.get('oldPassword')
+    new_password = data.get('new_password') or data.get('newPassword')
+
+    if not old_password:
+        return jsonify({'error': 'Old password is required.'}), 400
+
+    name = get_jwt_identity()
+    print(name,'ezaan')
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        # Fetch user by ID
+        cursor.execute("SELECT * FROM User WHERE Name = %s", (name,))
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({'error': 'User not found.'}), 404
+
+        # Check if old password matches
+        if not check_password_hash(user['Password'], old_password):
+            return jsonify({'error': 'Old password is incorrect.'}), 401
+
+        update_fields = []
+        update_values = []
+
+        if username:
+            update_fields.append("Name = %s")
+            update_values.append(username)
+
+        if email:
+            update_fields.append("Email = %s")
+            update_values.append(email)
+
+        if new_password:
+            hashed_password = generate_password_hash(new_password)
+            update_fields.append("Password = %s")
+            update_values.append(hashed_password)
+
+        if update_fields:
+            update_query = f"UPDATE User SET {', '.join(update_fields)} WHERE Name = %s"
+            update_values.append(name)
+            cursor.execute(update_query, tuple(update_values))
+            db.commit()
+
+        return jsonify({'message': 'Settings updated successfully.'}), 200
+
+    except Exception as e:
+        print(f"❌ Error updating settings: {e}")
+        return jsonify({'error': 'Failed to update settings.'}), 500
 
 
 if __name__ == '__main__':

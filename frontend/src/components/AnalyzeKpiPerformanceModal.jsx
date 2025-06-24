@@ -51,6 +51,10 @@ const AnalyzeKpiPerformanceModal = ({
           </Box>
         ) : userKpiHistoryError ? (
           <Typography color="error">{getErrorMessage(userKpiHistoryError)}</Typography>
+        ) : userKpiHistory?.error ? (
+          <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+            {userKpiHistory.error}
+          </Typography>
         ) : userKpiHistory && Object.keys(userKpiHistory).length > 0 ? (
           Object.entries(userKpiHistory).map(([kpiName, data]) => (
             <Box

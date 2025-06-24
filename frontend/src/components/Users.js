@@ -17,7 +17,7 @@ import { UserContext } from '../ContextState/contextState';
 import UserDetailModal from './UserDetailsModal';
 import AnalyzeKpiModal from './AnalyzeKpiPerformanceModal';
 import { CircularProgress, Box, Typography } from '@mui/material';
-
+import { Button } from '@mui/material'; // add this at the top if not already
 // 📌 Target mapping helper
 const getTargetForKPI = (kpiName) => {
   const targets = {
@@ -104,14 +104,19 @@ const UserGrid = () => {
     };
     const thunk = thunkMap[user.role];
     if (!thunk) {
+            setAnalyzeOpen(true);
       console.warn(`No KPI detection defined for role: ${user.role}`);
       return;
     }
 
     // Dispatch detection and patch target values
-    dispatch(thunk(user.id))
-      .unwrap()
-      .then((detectedKpis) => {
+   
+  dispatch(thunk(user.id))
+    .unwrap()
+    .then((detectedKpis) => {
+      if (!detectedKpis || Object.keys(detectedKpis).length === 0) {
+        setSelectedUserPerformance({ error: 'No active KPIs found for this user.' });
+      } else {
         const kpisWithTargets = {};
         for (const [kpi, value] of Object.entries(detectedKpis)) {
           kpisWithTargets[kpi] = {
@@ -120,13 +125,14 @@ const UserGrid = () => {
           };
         }
         setSelectedUserPerformance(kpisWithTargets);
-        setAnalyzeOpen(true);
-      })
-      .catch((err) => {
-        console.error('Failed to detect KPIs:', err);
-        setSelectedUserPerformance(null);
-        setAnalyzeOpen(false);
-      });
+      }
+      setAnalyzeOpen(true);
+    })
+    .catch((err) => {
+      // console.error('Failed to detect KPIs:', err);
+      // setSelectedUserPerformance({ error: 'Failed to analyze KPIs. Please try again.' });
+      setAnalyzeOpen(true);
+    });
   };
 
   const handleClose = () => {
@@ -146,21 +152,46 @@ const UserGrid = () => {
     { field: 'email', headerName: 'Email', width: 250 },
     { field: 'role', headerName: 'Role', width: 150 },
     { field: 'team_name', headerName: 'Team Name', width: 150 },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 260,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <KPIButton onClick={() => handleShowUser(params.row)} sx={{ backgroundColor: '#4361EE', flex: 1 }}>
-            View Details
-          </KPIButton>
-          <KPIButton onClick={() => handleAnalyzePerformance(params.row)} sx={{ backgroundColor: '#2F9E44', flex: 1 }}>
-            Analyze KPI
-          </KPIButton>
-        </Box>
-      ),
-    },
+{
+  field: 'actions',
+  headerName: 'Actions',
+  width: 260,
+  renderCell: (params) => (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      <Button
+        onClick={() => handleShowUser(params.row)}
+        variant="contained"
+        sx={{
+          backgroundColor: '#1976d2',
+          color: '#fff',
+          flex: 1,
+          textTransform: 'none',
+          '&:hover': {
+            backgroundColor: '#115293',
+          },
+        }}
+      >
+        View Details
+      </Button>
+      <Button
+        onClick={() => handleAnalyzePerformance(params.row)}
+        variant="contained"
+        sx={{
+          backgroundColor: '#2e7d32',
+          color: '#fff',
+          flex: 1,
+          textTransform: 'none',
+          '&:hover': {
+            backgroundColor: '#1b5e20',
+          },
+        }}
+      >
+        Analyze KPI
+      </Button>
+    </Box>
+  ),
+},
+
   ];
 
   return (

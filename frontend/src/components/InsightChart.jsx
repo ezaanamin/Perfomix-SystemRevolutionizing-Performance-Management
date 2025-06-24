@@ -15,18 +15,32 @@ const InsightChart = () => {
   }, [dispatch]);
 
   if (insightsStatus === 'loading') {
-    return <CircularProgress />;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
-  const performanceData = insightsData
-    ? [
-        { name: 'Under 50%', value: insightsData.performance_distribution["Under 50%"] },
-        { name: '50-70%', value: insightsData.performance_distribution["50-70%"] },
-        { name: '70%+', value: insightsData.performance_distribution["70%+"] },
-      ]
-    : [];
+  if (!insightsData) {
+    return (
+      <Box p={3}>
+        <Typography variant="h6">No insights data available.</Typography>
+      </Box>
+    );
+  }
 
-  const kpiDistributionData = insightsData ? insightsData.kpi_distribution : [];
+  const performanceDistribution = insightsData.performance_distribution || {};
+  const performanceData = [
+    { name: 'Under 50%', value: Number(performanceDistribution["Under 50%"] || 0) },
+    { name: '50-70%', value: Number(performanceDistribution["50-70%"] || 0) },
+    { name: '70%+', value: Number(performanceDistribution["70%+"] || 0) },
+  ];
+
+  const kpiDistributionData = insightsData.kpi_distribution || [];
+
+  const isPerformanceDataEmpty = performanceData.every(item => item.value === 0);
+  const isKpiDataEmpty = kpiDistributionData.length === 0;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -41,27 +55,31 @@ const InsightChart = () => {
             <Typography variant="h6" gutterBottom>
               Employee Performance Distribution
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={performanceData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} (${(percent * 100).toFixed(0)}%)`
-                  }
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {performanceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {isPerformanceDataEmpty ? (
+              <Typography>No performance data available.</Typography>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={performanceData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} (${(percent * 100).toFixed(0)}%)`
+                    }
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {performanceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </Paper>
         </Grid>
 
@@ -71,15 +89,19 @@ const InsightChart = () => {
             <Typography variant="h6" gutterBottom>
               KPI Underperformance Distribution
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={kpiDistributionData}>
-                <XAxis dataKey="kpi" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#3a86ff" />
-              </BarChart>
-            </ResponsiveContainer>
+            {isKpiDataEmpty ? (
+              <Typography>No KPI distribution data available.</Typography>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={kpiDistributionData}>
+                  <XAxis dataKey="kpi" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" fill="#3a86ff" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </Paper>
         </Grid>
       </Grid>
@@ -88,6 +110,3 @@ const InsightChart = () => {
 };
 
 export default InsightChart;
-
-
-

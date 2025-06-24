@@ -17,7 +17,7 @@ const PerformanceGrid = () => {
   useEffect(() => {
     if (performance_status === 'idle') {
       dispatch(Performance_Data());
-      console.log(performance_data)
+      console.log(performance_data,'per')
     }
   }, [dispatch, performance_status]);
 

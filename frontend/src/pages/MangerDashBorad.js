@@ -11,8 +11,8 @@ import {
 import InsightsIcon from "@mui/icons-material/Insights";
 import DownloadIcon from "@mui/icons-material/Download";
 import { UserContext } from "../ContextState/contextState";
-// import ModalUsersGithub from "../components/ModalUsersGithub";
-// import ModalPerformanceReport from "../components/ModalPerformanceReport";
+import ModalUsersGithub from "../components/ModalUsersGithub";
+import ModalPerformanceReport from "../components/ModalPerformanceReport";
 
 function ManagerDashboard() {
   const { Role } = useContext(UserContext);
@@ -43,8 +43,8 @@ function ManagerDashboard() {
   return (
     <>
       {/* Modals */}
-      {/* <ModalUsersGithub open={openGithubModal} handleClose={() => setOpenGithubModal(false)} /> */}
-      {/* <ModalPerformanceReport open={openPerformanceModal} handleClose={() => setOpenPerformanceModal(false)} /> */}
+      <ModalUsersGithub open={openGithubModal} handleClose={() => setOpenGithubModal(false)} />
+      <ModalPerformanceReport open={openPerformanceModal} handleClose={() => setOpenPerformanceModal(false)} />
 
       {/* Top Section */}
       <Box display="flex" justifyContent="space-between" gap="20px" backgroundColor={COLORS.lightThemeBackground} padding="20px">

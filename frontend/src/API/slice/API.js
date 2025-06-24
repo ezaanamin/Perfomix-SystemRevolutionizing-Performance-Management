@@ -5,6 +5,7 @@ const API_BASE_URL = 'http://127.0.0.1:5000';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token');
+  console.log(token,'redux')
   return {
     headers: {
       'Content-Type': 'application/json',
@@ -163,6 +164,27 @@ export const fetchUserKpiHistory = createAsyncThunk('kpi/fetchUserKpiHistory', a
   }
 });
 
+export const updateSettings = createAsyncThunk(
+  'API/updateSettings',
+  async (settingsData, { rejectWithValue }) => {
+    console.log('Sending settingsData:', settingsData);
+
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/update_settings`,
+        settingsData,
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('updateSettings error:', error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || 'Unknown error updating settings'
+      );
+    }
+  }
+);
+
 // --- Initial State ---
 
 const initialState = {
@@ -182,6 +204,9 @@ const initialState = {
   editKpiStatus: 'idle',
   editKpiError: null,
   latestBotDetection: null,
+  settingsData: null,
+settingsStatus: 'idle',
+settingsError: null,
   detectedKpisResults: {
     software_engineer: null,
     project_manager: null,
@@ -418,7 +443,20 @@ const APISlice = createSlice({
     .addCase(fetchPerformanceInsights.rejected, (state, action) => {
       state.insightsStatus = 'failed';
       state.insightsError = action.payload;
-    });
+    })
+    .addCase(updateSettings.pending, (state) => {
+  state.settingsStatus = 'loading';
+})
+.addCase(updateSettings.fulfilled, (state, action) => {
+  state.settingsStatus = 'succeeded';
+  state.settingsData = action.payload;
+  state.settingsError = null;
+})
+.addCase(updateSettings.rejected, (state, action) => {
+  state.settingsStatus = 'failed';
+  state.settingsError = action.payload;
+})
+
   },
 });
 export default APISlice.reducer;

@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../API/slice/API"; // Update to your actual path
+import { fetchUsers } from "../API/slice/API";
 
 const modalStyle = {
   position: "absolute",
@@ -31,26 +31,27 @@ const modalStyle = {
   flexDirection: "column",
 };
 
-// Fake performance — replace with API if needed
-const performanceMock = {
-  Rating: "88%",
-  Efficiency: "91%",
-  BotsDetected: 2,
-};
+// Mock performance per user (could be replaced with API call later)
+const getMockPerformance = (userId) => ({
+  Rating: `${80 + (userId % 20)}%`,
+  Efficiency: `${85 + (userId % 10)}%`,
+  BotsDetected: userId % 3, // 0, 1, 2 based on id
+});
 
 function ModalPerformanceReport({ open, handleClose }) {
   const dispatch = useDispatch();
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  const users = useSelector((state) => state.user.usersData);
-  const status = useSelector((state) => state.user.userStatus);
-  const error = useSelector((state) => state.user.userError);
+  // 🔧 Corrected selectors to use state.API
+  const users = useSelector((state) => state.API.usersData || []);
+  const status = useSelector((state) => state.API.userStatus || "idle");
+  const error = useSelector((state) => state.API.userError || null);
 
   useEffect(() => {
-    if (open && status === "idle") {
+    if (open) {
       dispatch(fetchUsers());
     }
-  }, [open, status, dispatch]);
+  }, [open, dispatch]);
 
   const handleUserClick = (userId) => setSelectedUserId(userId);
   const handleBack = () => setSelectedUserId(null);
@@ -82,14 +83,7 @@ function ModalPerformanceReport({ open, handleClose }) {
           Team Members
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        <Box
-          sx={{
-            overflowY: "auto",
-            flexGrow: 1,
-            pr: 1,
-            mb: 2,
-          }}
-        >
+        <Box sx={{ overflowY: "auto", flexGrow: 1, pr: 1, mb: 2 }}>
           <List>
             {filteredUsers.map((user) => (
               <ListItem
@@ -135,6 +129,8 @@ function ModalPerformanceReport({ open, handleClose }) {
     const user = users.find((u) => u.user_id === selectedUserId);
     if (!user) return null;
 
+    const performance = getMockPerformance(user.user_id);
+
     return (
       <>
         <Box display="flex" alignItems="center" mb={2}>
@@ -154,7 +150,7 @@ function ModalPerformanceReport({ open, handleClose }) {
           <ListItem>
             <ListItemText
               primary="Rating"
-              secondary={performanceMock.Rating}
+              secondary={performance.Rating}
               primaryTypographyProps={{ fontWeight: 500 }}
               secondaryTypographyProps={{ fontWeight: 600 }}
             />
@@ -162,7 +158,7 @@ function ModalPerformanceReport({ open, handleClose }) {
           <ListItem>
             <ListItemText
               primary="Efficiency"
-              secondary={performanceMock.Efficiency}
+              secondary={performance.Efficiency}
               primaryTypographyProps={{ fontWeight: 500 }}
               secondaryTypographyProps={{ fontWeight: 600 }}
             />
@@ -173,11 +169,11 @@ function ModalPerformanceReport({ open, handleClose }) {
           Bots Detected
         </Typography>
         <Typography
-          color={performanceMock.BotsDetected > 0 ? "error" : "success.main"}
+          color={performance.BotsDetected > 0 ? "error.main" : "success.main"}
           mb={1}
         >
-          {performanceMock.BotsDetected} bot
-          {performanceMock.BotsDetected !== 1 ? "s" : ""} detected
+          {performance.BotsDetected} bot
+          {performance.BotsDetected !== 1 ? "s" : ""} detected
         </Typography>
       </>
     );
