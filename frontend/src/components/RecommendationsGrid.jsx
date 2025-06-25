@@ -16,15 +16,18 @@ const RecommendationsGrid = () => {
 
   const [rows, setRows] = useState([]);
 
+  // Fetch data on mount
   useEffect(() => {
     dispatch(performance_with_courses());
   }, [dispatch]);
 
+  // Map API response to DataGrid row format
   useEffect(() => {
     if (performance_status === 'succeeded') {
       const mappedRows = low_performance_with_courses.map((item) => ({
         id: item.PerformanceID,
         userName: item.UserName,
+        role: item.Role,
         kpiName: item.KPIName,
         actualValue: item.ActualValue,
         targetValue: item.TargetValue,
@@ -36,9 +39,11 @@ const RecommendationsGrid = () => {
     }
   }, [low_performance_with_courses, performance_status]);
 
+  // Define DataGrid columns
   const columns = [
     { field: 'id', headerName: 'ID', width: 80 },
     { field: 'userName', headerName: 'User Name', width: 160 },
+    { field: 'role', headerName: 'Role', width: 160 },
     { field: 'kpiName', headerName: 'KPI', width: 160 },
     { field: 'actualValue', headerName: 'Actual', width: 100 },
     { field: 'targetValue', headerName: 'Target', width: 100 },
@@ -56,13 +61,17 @@ const RecommendationsGrid = () => {
       },
     },
     { field: 'timestamp', headerName: 'Timestamp', width: 200 },
-    { field: 'courses', headerName: 'Recommended Courses', width: 250 },
+    { field: 'courses', headerName: 'Recommended Courses', width: 320 },
   ];
 
   return (
     <>
-      <Header title="Recommendations" subtitle="Employees needing upskilling suggestions" />
+      <Header
+        title="Employee Performance & Course Recommendations"
+        subtitle="Upskilling suggestions for underperforming employees based on their role"
+      />
 
+      {/* Loading state */}
       {performance_status === 'loading' && (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
           <CircularProgress />
@@ -72,6 +81,7 @@ const RecommendationsGrid = () => {
         </Box>
       )}
 
+      {/* Error state */}
       {performance_status === 'failed' && (
         <Box sx={{ textAlign: 'center', color: 'error.main', mt: 4 }}>
           <Typography variant="h6">Failed to load recommendations</Typography>
@@ -79,18 +89,21 @@ const RecommendationsGrid = () => {
         </Box>
       )}
 
+      {/* No data state */}
       {performance_status === 'succeeded' && rows.length === 0 && (
         <Typography variant="h6" sx={{ textAlign: 'center', mt: 4, color: 'text.secondary' }}>
           No underperforming records found.
         </Typography>
       )}
 
+      {/* Success state with data */}
       {performance_status === 'succeeded' && rows.length > 0 && (
         <DataGrid
           rows={rows}
           columns={columns}
           pageSize={5}
           autoHeight
+          disableSelectionOnClick
           sx={{
             '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f5f5f5' },
             '& .MuiDataGrid-cell': { borderColor: '#ddd' },

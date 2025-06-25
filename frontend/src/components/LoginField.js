@@ -54,7 +54,7 @@ function LoginField() {
     localStorage.removeItem('role');
     localStorage.removeItem('token_expiration');
     SetRole(null);
-    navigate('/login');
+    navigate('/');
   }, timeRemaining);
               // Direct user to respective role page
               if (data.role === 'admin') {
