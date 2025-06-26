@@ -13,7 +13,10 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../API/slice/API";
+import {
+  fetchUsers,
+  fetchUserPerformanceRating,
+} from "../API/slice/API";
 
 const modalStyle = {
   position: "absolute",
@@ -31,33 +34,41 @@ const modalStyle = {
   flexDirection: "column",
 };
 
-// Mock performance per user (could be replaced with API call later)
-const getMockPerformance = (userId) => ({
-  Rating: `${80 + (userId % 20)}%`,
-  Efficiency: `${85 + (userId % 10)}%`,
-  BotsDetected: userId % 3, // 0, 1, 2 based on id
-});
-
 function ModalPerformanceReport({ open, handleClose }) {
   const dispatch = useDispatch();
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  // 🔧 Corrected selectors to use state.API
-  const users = useSelector((state) => state.API.usersData || []);
-  const status = useSelector((state) => state.API.userStatus || "idle");
-  const error = useSelector((state) => state.API.userError || null);
+  const {
+    usersData: users,
+    userStatus,
+    userError,
+    userPerformance,
+    userPerformanceLoading,
+    userPerformanceError,
+  } = useSelector((state) => state.API);
 
   useEffect(() => {
     if (open) {
       dispatch(fetchUsers());
+    } else {
+      setSelectedUserId(null);
     }
   }, [open, dispatch]);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      const user = users.find((u) => u.user_id === selectedUserId);
+      if (user) {
+        dispatch(fetchUserPerformanceRating(user.name));
+      }
+    }
+  }, [selectedUserId, users, dispatch]);
 
   const handleUserClick = (userId) => setSelectedUserId(userId);
   const handleBack = () => setSelectedUserId(null);
 
   const renderUserList = () => {
-    if (status === "loading") {
+    if (userStatus === "loading") {
       return (
         <Box display="flex" justifyContent="center" my={5}>
           <CircularProgress />
@@ -65,16 +76,14 @@ function ModalPerformanceReport({ open, handleClose }) {
       );
     }
 
-    if (error) {
-      return <Typography color="error">Error: {error}</Typography>;
+    if (userError) {
+      return <Typography color="error">Error: {userError}</Typography>;
     }
 
-    const filteredUsers = Array.isArray(users)
-      ? users.filter((u) => u.role !== "Admin")
-      : [];
+    const filteredUsers = users.filter((u) => u.role !== "Admin");
 
     if (filteredUsers.length === 0) {
-      return <Typography>No users found (Admins are excluded).</Typography>;
+      return <Typography>No team members found.</Typography>;
     }
 
     return (
@@ -126,10 +135,21 @@ function ModalPerformanceReport({ open, handleClose }) {
   };
 
   const renderUserDetails = () => {
-    const user = users.find((u) => u.user_id === selectedUserId);
-    if (!user) return null;
+    if (userPerformanceLoading) {
+      return (
+        <Box display="flex" justifyContent="center" my={5}>
+          <CircularProgress />
+        </Box>
+      );
+    }
 
-    const performance = getMockPerformance(user.user_id);
+    if (userPerformanceError) {
+      return <Typography color="error">Error: {userPerformanceError}</Typography>;
+    }
+
+    if (!userPerformance) {
+      return <Typography>No performance data available.</Typography>;
+    }
 
     return (
       <>
@@ -138,43 +158,55 @@ function ModalPerformanceReport({ open, handleClose }) {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h6" fontWeight="600">
-            @{user.name.toLowerCase().replace(/\s+/g, "")}'s Performance
+            @{userPerformance.UserName.toLowerCase().replace(/\s+/g, "")}'s Performance
           </Typography>
         </Box>
         <Divider sx={{ mb: 2 }} />
 
         <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-          Performance Metrics
+          Performance Summary
         </Typography>
+
         <List dense>
           <ListItem>
             <ListItemText
-              primary="Rating"
-              secondary={performance.Rating}
+              primary="Performance"
+              secondary={`${userPerformance.PerformancePercent}%`}
               primaryTypographyProps={{ fontWeight: 500 }}
               secondaryTypographyProps={{ fontWeight: 600 }}
             />
           </ListItem>
           <ListItem>
             <ListItemText
-              primary="Efficiency"
-              secondary={performance.Efficiency}
+              primary="Bots Detected"
+              secondary={userPerformance.BotCount}
+              primaryTypographyProps={{ fontWeight: 500 }}
+              secondaryTypographyProps={{
+                fontWeight: 600,
+                color:
+                  userPerformance.BotCount > 0 ? "error.main" : "success.main",
+              }}
+            />
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary="Final Rating"
+              secondary={userPerformance.Rating.toFixed(2)}
+              primaryTypographyProps={{ fontWeight: 500 }}
+              secondaryTypographyProps={{ fontWeight: 600 }}
+            />
+          </ListItem>
+          <ListItem>
+            <ListItemText
+              primary="Last Updated"
+              secondary={
+                new Date(userPerformance.LastUpdated).toLocaleString() || "N/A"
+              }
               primaryTypographyProps={{ fontWeight: 500 }}
               secondaryTypographyProps={{ fontWeight: 600 }}
             />
           </ListItem>
         </List>
-
-        <Typography variant="subtitle1" fontWeight="600" mt={3}>
-          Bots Detected
-        </Typography>
-        <Typography
-          color={performance.BotsDetected > 0 ? "error.main" : "success.main"}
-          mb={1}
-        >
-          {performance.BotsDetected} bot
-          {performance.BotsDetected !== 1 ? "s" : ""} detected
-        </Typography>
       </>
     );
   };

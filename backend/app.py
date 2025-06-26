@@ -14,6 +14,10 @@ import pickle
 import random
 import os
 from requests.auth import HTTPBasicAuth
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from flask import send_file
 import pandas as pd
 app = Flask(__name__)
 
@@ -1312,9 +1316,16 @@ def detect_and_save_kpis(user_id, role, detection_functions):
         detected_kpis = {}
         active_kpis = get_active_kpis_for_role(role) or []
 
-        repo_owner = GITHUB_REPO_OWNER
-        repo_name = GITHUB_REPOS
         jira_project_key = JIRA_PROJECT_KEY
+
+        # Define base course by role or fallback
+        role_to_base_course = {
+            'software engineer': 'python data structures',
+            'project manager': 'leadership and emotional intelligence',
+            'business manager': 'business strategy: business model canvas analysis with miro',
+            'testing': 'python data structures',
+        }
+        base_course = role_to_base_course.get(role.lower(), 'project management basics')
 
         for kpi_name, detect_func in detection_functions.items():
             if kpi_name not in active_kpis:
@@ -1331,13 +1342,39 @@ def detect_and_save_kpis(user_id, role, detection_functions):
 
                 detected_kpis.update(result)
 
-                # Save each KPI to DB
                 for key, value in result.items():
                     try:
                         val_float = float(value)
                     except Exception:
                         val_float = 0.0
+
+                    # Save performance data
                     save_performance_data(user_id, key, role, val_float)
+
+                    # If performance < 50%, get recommendations and save in Recommendation table
+                    if val_float < 50:
+                        recommended_courses = recommend(base_course)
+                        recommendation_text = ", ".join(recommended_courses)
+
+                        # Insert into Recommendation table
+                        insert_query = """
+                            INSERT INTO Recommendation (UserID, KPIID, Text, Timestamp, course_name)
+                            VALUES (
+                                %s, 
+                                (SELECT KPIID FROM KPI WHERE KPIName = %s LIMIT 1), 
+                                %s, 
+                                %s,
+                                %s
+                            )
+                        """
+                        cursor.execute(insert_query, (
+                            user_id,
+                            key,
+                            recommendation_text,
+                            datetime.now(),
+                            base_course.title(),
+                        ))
+                        db.commit()
 
             except Exception as e:
                 print(f"⚠️ Error detecting KPI '{kpi_name}': {e}")
@@ -1556,7 +1593,7 @@ def recommend(course):
         print(f"❌ Error in recommend(): {e}")
         return ["Course recommendations unavailable."]
 @app.route('/get/low_performance_with_courses', methods=['GET'])
-def get_low_performance_with_courses():
+def get_low_performance_recommendations():
     try:
         mydb = get_db_connection()
         if mydb is None:
@@ -1566,48 +1603,61 @@ def get_low_performance_with_courses():
 
         query = """
             SELECT 
-                pd.PerformanceID,
+                r.RecommendationID,
                 u.Name AS UserName,
                 u.Role,
                 k.KPIName,
                 pd.ActualValue,
                 k.TargetValue,
                 ROUND((pd.ActualValue / k.TargetValue) * 100, 2) AS PerformancePercent,
-                pd.Timestamp
-            FROM PerformanceData pd
-            JOIN User u ON pd.UserID = u.UserID
-            JOIN KPI k ON pd.KPIID = k.KPIID
-            WHERE (pd.ActualValue / k.TargetValue) < 0.7
-            ORDER BY pd.Timestamp DESC;
+                r.Timestamp,
+                r.Text AS RecommendationText,
+                r.course_name
+            FROM Recommendation r
+            JOIN User u ON r.UserID = u.UserID
+            JOIN KPI k ON r.KPIID = k.KPIID
+            JOIN PerformanceData pd ON pd.UserID = r.UserID AND pd.KPIID = r.KPIID
+            WHERE pd.Timestamp = (
+                SELECT MAX(pd2.Timestamp) 
+                FROM PerformanceData pd2 
+                WHERE pd2.UserID = r.UserID AND pd2.KPIID = r.KPIID
+            )
+            AND ROUND((pd.ActualValue / k.TargetValue) * 100, 2) < 50
+            ORDER BY r.Timestamp DESC
+            LIMIT 100;
         """
+
         mycursor.execute(query)
         data = mycursor.fetchall()
 
-        columns = ["PerformanceID", "UserName", "Role", "KPIName", "ActualValue", "TargetValue", "PerformancePercent", "Timestamp"]
-
-        role_to_course = {
-            'software engineer': 'python data structures',
-            'project manager': 'leadership and emotional intelligence',
-            'business manager': 'business strategy: business model canvas analysis with miro',
-            'testing': 'python data structures',
-        }
+        columns = [
+            "RecommendationID",
+            "UserName",
+            "Role",
+            "KPIName",
+            "ActualValue",
+            "TargetValue",
+            "PerformancePercent",
+            "Timestamp",
+            "RecommendationText",
+            "CourseName",
+        ]
 
         results = []
         for row in data:
             record = dict(zip(columns, row))
-            role = (record.get('Role') or 'unknown').lower()
-
-            base_course = role_to_course.get(role, 'project management basics')
-            recommended_courses = recommend(base_course)
-
-            record['RecommendedCourses'] = recommended_courses
+            ts = record["Timestamp"]
+            if hasattr(ts, "strftime"):
+                record["Timestamp"] = ts.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            record["PerformancePercent"] = f"{record['PerformancePercent']}%"
             results.append(record)
 
         return jsonify(results)
 
     except Exception as e:
-        print(f"❌ Error fetching low performance data: {e}")
         return jsonify({"error": str(e)}), 500
+
+
 @app.route('/get/performance_insights', methods=['GET'])
 def get_performance_insights():
     try:
@@ -1718,6 +1768,292 @@ def update_settings():
     except Exception as e:
         print(f"❌ Error updating settings: {e}")
         return jsonify({'error': 'Failed to update settings.'}), 500
+
+
+@app.route('/get/latest_performance', methods=['GET'])
+@jwt_required()
+def get_latest_performance():
+    try:
+        print("Request received for latest performance data.")
+
+        store_name = get_jwt_identity()
+        print(f"Authenticated user: {store_name}")
+
+        if not store_name:
+            return jsonify({"error": "User identity not found in token"}), 400
+
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        # Get UserID for the given store name
+        cursor.execute("SELECT UserID FROM User WHERE Name = %s", (store_name,))
+        user = cursor.fetchone()
+
+        if not user:
+            cursor.close()
+            db.close()
+            return jsonify({"error": "User not found for store"}), 404
+
+        user_id = user['UserID']
+
+        cursor.execute("SELECT MAX(Timestamp) AS LatestTimestamp FROM PerformanceData WHERE UserID = %s", (user_id,))
+        latest_ts_row = cursor.fetchone()
+        latest_timestamp = latest_ts_row['LatestTimestamp'] if latest_ts_row else None
+
+        if not latest_timestamp:
+            cursor.close()
+            db.close()
+            return jsonify({"error": "No performance data found for user"}), 404
+
+        cursor.execute("""
+            SELECT 
+                pd.PerformanceID,
+                u.Name AS UserName,
+                k.KPIName,
+                pd.ActualValue,
+                k.TargetValue,
+                ROUND(LEAST((pd.ActualValue / k.TargetValue) * 100, 100), 2) AS PerformancePercent,
+                pd.Timestamp
+            FROM PerformanceData pd
+            JOIN User u ON pd.UserID = u.UserID
+            JOIN KPI k ON pd.KPIID = k.KPIID
+            WHERE pd.UserID = %s AND pd.Timestamp = %s
+            ORDER BY pd.PerformanceID
+        """, (user_id, latest_timestamp))
+
+        data = cursor.fetchall()
+
+        cursor.close()
+        db.close()
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        print(f"❌ Error fetching latest performance: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route('/performance_report', methods=['GET'])
+@jwt_required()
+def performance_report():
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        date_filter = request.args.get('date')
+        download = request.args.get('download')
+
+        query = """
+            SELECT 
+                u.Name AS UserName,
+                k.KPIName,
+                pd.ActualValue,
+                k.TargetValue,
+                ROUND(LEAST((pd.ActualValue / k.TargetValue) * 100, 100), 2) AS PerformancePercent,
+                pd.Timestamp
+            FROM PerformanceData pd
+            JOIN User u ON pd.UserID = u.UserID
+            JOIN KPI k ON pd.KPIID = k.KPIID
+        """
+        params = ()
+
+        if date_filter:
+            query += " WHERE DATE(pd.Timestamp) = %s"
+            params = (date_filter,)
+
+        query += " ORDER BY pd.Timestamp DESC, u.Name"
+
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+
+        cursor.close()
+        db.close()
+
+        # If download=1, generate and return PDF
+        if download == '1':
+            buffer = BytesIO()
+            pdf = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+
+            pdf.setFont("Helvetica-Bold", 14)
+            pdf.drawString(50, height - 50, "Performance Report")
+
+            pdf.setFont("Helvetica", 10)
+            y = height - 80
+
+            headers = ["UserName", "KPIName", "Actual", "Target", "Performance (%)", "Timestamp"]
+            col_positions = [50, 150, 300, 350, 420, 500]
+
+            for i, header in enumerate(headers):
+                pdf.drawString(col_positions[i], y, header)
+
+            y -= 20
+
+            for row in data:
+                if y < 50:
+                    pdf.showPage()
+                    y = height - 50
+
+                pdf.drawString(col_positions[0], y, row['UserName'])
+                pdf.drawString(col_positions[1], y, row['KPIName'])
+                pdf.drawString(col_positions[2], y, str(row['ActualValue']))
+                pdf.drawString(col_positions[3], y, str(row['TargetValue']))
+                pdf.drawString(col_positions[4], y, f"{row['PerformancePercent']}%")
+                pdf.drawString(col_positions[5], y, row['Timestamp'].strftime("%Y-%m-%d %H:%M"))
+
+                y -= 18
+
+            pdf.save()
+            buffer.seek(0)
+
+            return send_file(
+                buffer,
+                as_attachment=True,
+                download_name="Performance_Report.pdf",
+                mimetype='application/pdf'
+            )
+
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        print(f"❌ Error in performance report: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/user_performance_rating', methods=['GET'])
+@jwt_required()
+def user_performance_rating():
+    try:
+        username = request.args.get('username')
+        if not username:
+            return jsonify({"error": "Missing username parameter"}), 400
+
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                ROUND(LEAST((pd.ActualValue / k.TargetValue) * 100, 100), 2) AS PerformancePercent,
+                pd.Timestamp,
+                (SELECT COALESCE(SUM(b.is_bot), 0) 
+                 FROM BotDetection b 
+                 WHERE b.user_id = u.UserID) AS BotsDetected
+            FROM PerformanceData pd
+            JOIN `User` u ON pd.UserID = u.UserID
+            JOIN KPI k ON pd.KPIID = k.KPIID
+            WHERE u.Name = %s AND k.Status = 'active'
+            ORDER BY pd.Timestamp DESC
+            LIMIT 1
+        """
+
+        cursor.execute(query, (username,))
+        result = cursor.fetchone()
+
+        if not result:
+            cursor.close()
+            db.close()
+            return jsonify({"error": "No performance data found for user"}), 404
+
+        performance_percent = result['PerformancePercent']
+        bot_count = result['BotsDetected']
+        penalty_per_bot = 2  # percent deduction per bot
+
+        rating = performance_percent - (bot_count * penalty_per_bot)
+        rating = max(0, min(100, rating))  # clamp between 0 and 100
+
+        response = {
+            "UserName": username,
+            "PerformancePercent": performance_percent,
+            "BotCount": bot_count,
+            "Rating": float(rating),
+            "LastUpdated": result['Timestamp'].strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        cursor.close()
+        db.close()
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(f"❌ Error in user_performance_rating: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/admin_dashboard_data', methods=['GET'])
+# @jwt_required()
+
+def admin_dashboard_data():
+    try:
+        admin_name = "admin"
+        db = get_db_connection()  # Ensure this function is defined elsewhere
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute("SELECT COUNT(*) AS total_users FROM User")
+        row = cursor.fetchone()
+        total_users = row["total_users"] if row else 0
+
+        cursor.execute("SELECT COUNT(*) AS total_bots FROM BotDetection WHERE is_bot = 1")
+        row = cursor.fetchone()
+        total_bots = row["total_bots"] if row else 0
+
+        cursor.execute("""
+            SELECT 
+                COUNT(*) AS total_performances,
+                SUM(CASE WHEN pd.ActualValue >= k.TargetValue THEN 1 ELSE 0 END) AS achieved_count
+            FROM PerformanceData pd
+            JOIN KPI k ON pd.KPIID = k.KPIID
+            WHERE k.Status = 'active'
+        """)
+        perf_data = cursor.fetchone() or {"total_performances": 0, "achieved_count": 0}
+
+        total_perf = perf_data.get("total_performances", 0) or 0
+        achieved = perf_data.get("achieved_count", 0) or 0
+        kpi_achievement_rate = round((achieved / total_perf) * 100, 2) if total_perf > 0 else 0
+
+        cursor.execute("""
+            SELECT 
+                pd.PerformanceID, u.Name AS user_name, pd.ActualValue, pd.Timestamp, k.KPIName
+            FROM PerformanceData pd
+            JOIN User u ON pd.UserID = u.UserID
+            JOIN KPI k ON pd.KPIID = k.KPIID
+            WHERE k.Status = 'active'
+            ORDER BY pd.Timestamp DESC
+            LIMIT 5
+        """)
+        recent_performances = cursor.fetchall() or []
+
+        cursor.execute("""
+            SELECT 
+                k.KPIName,
+                COUNT(pd.PerformanceID) AS total_records,
+                SUM(CASE WHEN pd.ActualValue >= k.TargetValue THEN 1 ELSE 0 END) AS achieved
+            FROM KPI k
+            LEFT JOIN PerformanceData pd ON k.KPIID = pd.KPIID
+            WHERE k.Status = 'active'
+            GROUP BY k.KPIID
+        """)
+        kpi_summary = cursor.fetchall() or []
+
+        cursor.close()
+        db.close()
+
+        return jsonify({
+            "admin": admin_name,
+            "stats": {
+                "total_users": total_users,
+                "total_bots": total_bots,
+                "kpi_achievement_rate": kpi_achievement_rate,
+                "recent_performances_count": len(recent_performances),
+            },
+            "recent_reports": recent_performances,
+            "kpi_summary": kpi_summary
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error fetching admin dashboard data: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

@@ -148,8 +148,7 @@ const createKpiDetectionThunk = (role) =>
   }
 );
 
-  
-export const detectSoftwareEngineerKPIs = createKpiDetectionThunk('software_engineer');
+  export const detectSoftwareEngineerKPIs = createKpiDetectionThunk('software_engineer');
 export const detectProjectManagerKPIs = createKpiDetectionThunk('project_manager');
 export const detectBusinessManagerKPIs = createKpiDetectionThunk('business_manager');
 export const detectTestingTeamKPIs = createKpiDetectionThunk('testing_team');
@@ -184,14 +183,95 @@ export const updateSettings = createAsyncThunk(
     }
   }
 );
+//latest_performance
+
+export const latest_performance = createAsyncThunk(
+  'API/latest_performance',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/get/latest_performance`,
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('latest_performance error:', error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || 'Unknown error fetching latest performance'
+      );
+    }
+  }
+);
+
+
+export const performance_report = createAsyncThunk(
+  'api/performance_report',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/performance_report?download=1`, {
+        ...getAuthHeaders(),
+        responseType: 'blob', // important: tells axios to treat response as binary data
+      });
+
+      return response.data; // this is a Blob (PDF file)
+    } catch (error) {
+      console.error('performance_report error:', error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || 'Unknown error downloading report'
+      );
+    }
+  }
+);
+
+export const fetchUserPerformanceRating = createAsyncThunk(
+  'performance/fetchUserPerformanceRating',
+  async (username, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/user_performance_rating`, {
+        params: { username },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      return response.data; // { UserName, PerformancePercent, BotCount, Rating, LastUpdated }
+    } catch (error) {
+      console.error('fetchUserPerformanceRating error:', error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || 'Failed to fetch user performance rating'
+      );
+    }
+  }
+);
+
+export const fetchAdminDashboardData = createAsyncThunk(
+  'dashboard/fetchAdminDashboardData',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin_dashboard_data`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      return response.data; // whatever shape your backend returns
+    } catch (error) {
+      console.error('fetchAdminDashboardData error:', error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || 'Failed to fetch admin dashboard data'
+      );
+    }
+  }
+);
 
 // --- Initial State ---
 
 const initialState = {
   loginData: null,
+  userPerformance: null,
+  latest_performance:[],
   kpiData: [],
   usersData: [],
   performance_data:[],
+    performance_report:[],
   low_performance_with_courses:[],
   performance_status: 'idle',
   activeKpisByRole: {},   // store KPIs keyed by role, e.g. { "admin": [...], "user": [...] }
@@ -232,6 +312,10 @@ settingsError: null,
     insightsData: null,
   insightsStatus: 'idle',
   insightsError: null,
+  adminDashboardData: null,
+adminDashboardStatus: 'idle',
+adminDashboardError: null,
+
 };
 
 // --- Slice ---
@@ -456,7 +540,63 @@ const APISlice = createSlice({
   state.settingsStatus = 'failed';
   state.settingsError = action.payload;
 })
+   builder
+      .addCase(latest_performance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(latest_performance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.latest_performance = action.payload;
+      })
+      .addCase(latest_performance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch latest performance';
+      })
+        builder
+      .addCase(performance_report.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(performance_report.fulfilled, (state, action) => {
+        state.loading = false;
+        state.performance_report = action.payload;
+      })
+      .addCase(performance_report.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch latest performance';
+      })
+        .addCase(fetchUserPerformanceRating.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.userPerformance = null;
+      })
+      .addCase(fetchUserPerformanceRating.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userPerformance = action.payload;
+      })
+      .addCase(fetchUserPerformanceRating.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch data';
+      })
+      builder
+  .addCase(fetchAdminDashboardData.pending, (state) => {
+    state.adminDashboardStatus = 'loading';
+    state.adminDashboardError = null;
+  })
+  .addCase(fetchAdminDashboardData.fulfilled, (state, action) => {
+    state.adminDashboardStatus = 'succeeded';
+    state.adminDashboardData = action.payload;
+  })
+  .addCase(fetchAdminDashboardData.rejected, (state, action) => {
+    state.adminDashboardStatus = 'failed';
+    state.adminDashboardError = action.payload || 'Failed to fetch admin dashboard data';
+  });
+
 
   },
-});
+})
+
+
+
 export default APISlice.reducer;

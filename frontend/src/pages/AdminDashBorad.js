@@ -1,11 +1,12 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { UserContext } from "../ContextState/contextState";
 import { useNavigate } from "react-router-dom";
-import { AdminDashboardDiv } from "../style/style"; 
+import { AdminDashboardDiv } from "../style/style";
 import LineChart from "../components/LineChart";
-import BarChart from "../components/BarChart"; 
+import BarChart from "../components/BarChart";
 import GeographyChart from "../components/EmployeePerformanceDataGrid";
-import ProgressCircle from "../components/ProgressCircle"; 
+import ProgressCircle from "../components/ProgressCircle";
 import { Box, Button, Typography } from "@mui/material";
 import StatBox from "../components/StatsBox";
 import Header from "../components/Header";
@@ -13,58 +14,93 @@ import InsightsIcon from "@mui/icons-material/Insights";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
-import { mockTransactions } from "../data/mockData";
-import { useEffect } from "react";
+import { fetchAdminDashboardData } from "../API/slice/API";
+import RecommendationsGrid from "../components/RecommendationsGrid";
 
 function AdminDashboard() {
   const userContext = useContext(UserContext);
-  const { Role,SetRole } = userContext;
+  const { Role, SetRole } = userContext;
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const adminDashboardData = useSelector(state => state.API.adminDashboardData);
+  const adminDashboardStatus = useSelector(state => state.API.adminDashboardStatus);
+  const adminDashboardError = useSelector(state => state.API.adminDashboardError);
 
   useEffect(() => {
-      const accessToken = localStorage.getItem("access_token");
-      const role = localStorage.getItem("role");
-      SetRole(role)
-      if (role !== 'admin' || !accessToken) {
-          navigate('/');
-      }
-  }, [Role, navigate]); 
+    const accessToken = localStorage.getItem("access_token");
+    const role = localStorage.getItem("role");
+    SetRole(role);
+    if (role !== "admin" || !accessToken) {
+      navigate("/");
+    } else {
+      dispatch(fetchAdminDashboardData());
+    }
+  }, [Role, navigate, SetRole, dispatch]);
+
   const COLORS = {
-    lightThemeBackground: "#F5F9FF", // Soft Sky Blue
-    lightThemeText: "#2D3A56", // Dark Navy Blue
-    hoverBackground: "#E6F7F7", // Light Cyan
-    brightBlue: "#4361EE", // Bright Blue for icons and highlights
-    vividOrange: "#FFA600", // Accent color for key elements
-    softCyan: "#80B5FA", // Secondary color
-    greenAccent: "#6abf69", // Green Accent for revenue
+    lightThemeBackground: "#F5F9FF",
+    lightThemeText: "#2D3A56",
+    hoverBackground: "#E6F7F7",
+    brightBlue: "#4361EE",
+    vividOrange: "#FFA600",
+    softCyan: "#80B5FA",
+    greenAccent: "#6abf69",
   };
+
+  const stats = adminDashboardData ? [
+    {
+      title: `${adminDashboardData.stats?.kpi_achievement_rate ?? "N/A"}%`,
+      subtitle: "KPI Achievement Rate",
+      progress: (Number(adminDashboardData.stats?.kpi_achievement_rate) || 0) / 100,
+      increase: "",
+      icon: <AssessmentIcon sx={{ color: COLORS.brightBlue, fontSize: "26px" }} />,
+    },
+    {
+      title: adminDashboardData.stats?.total_bots?.toString() ?? "N/A",
+      subtitle: "Bot Detection",
+      progress: 1,
+      increase: "",
+      icon: <BugReportIcon sx={{ color: COLORS.vividOrange, fontSize: "26px" }} />,
+    },
+    {
+      title: adminDashboardData.stats?.total_users?.toString() ?? "N/A",
+      subtitle: "Tool Integrations Active",
+      progress: 1,
+      increase: "",
+      icon: <IntegrationInstructionsIcon sx={{ color: COLORS.brightBlue, fontSize: "26px" }} />,
+    },
+  ] : [];
+
+  if (adminDashboardStatus === "loading") {
+    return <AdminDashboardDiv><Typography>Loading dashboard data...</Typography></AdminDashboardDiv>;
+  }
+
+  if (adminDashboardStatus === "failed") {
+    return <AdminDashboardDiv><Typography color="error">Error loading dashboard data: {adminDashboardError}</Typography></AdminDashboardDiv>;
+  }
 
   return (
     <AdminDashboardDiv>
-      {/* Header Section */}
+      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="PERFOMIX DASHBOARD" subtitle="Track performance, detect anomalies, and gain insights" />
-        <Box>
-          <Button
-            sx={{
-              backgroundColor: COLORS.brightBlue,
-              color: COLORS.lightThemeBackground,
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-              "&:hover": {
-                backgroundColor: COLORS.hoverBackground,
-                color: COLORS.lightThemeText,
-              },
-            }}
-          >
-            <InsightsIcon sx={{ mr: "10px" }} />
-            View Detailed Insights
-          </Button>
-        </Box>
+        <Button
+          sx={{
+            backgroundColor: COLORS.brightBlue,
+            color: COLORS.lightThemeBackground,
+            fontSize: "14px",
+            fontWeight: "bold",
+            padding: "10px 20px",
+            "&:hover": { backgroundColor: COLORS.hoverBackground, color: COLORS.lightThemeText },
+          }}
+        >
+          <InsightsIcon sx={{ mr: "10px" }} />
+          View Detailed Insights
+        </Button>
       </Box>
 
-      {/* Grid and Stats Section */}
+      {/* Stats Grid */}
       <Box
         display="grid"
         gridTemplateColumns="repeat(12, 1fr)"
@@ -72,120 +108,67 @@ function AdminDashboard() {
         gap="20px"
         mt="20px"
       >
-        {[
-          {
-            title: "85%",
-            subtitle: "KPI Achievement Rate",
-            progress: "0.85",
-            increase: "+5%",
-            icon: <AssessmentIcon sx={{ color: COLORS.brightBlue, fontSize: "26px" }} />,
-          },
-          {
-            title: "23",
-            subtitle: "Anomalies Detected",
-            progress: "0.20",
-            increase: "+8%",
-            icon: <BugReportIcon sx={{ color: COLORS.vividOrange, fontSize: "26px" }} />,
-          },
-          {
-            title: "56",
-            subtitle: "NLP Recommendations",
-            progress: "0.65",
-            increase: "+12%",
-            icon: <InsightsIcon sx={{ color: COLORS.softCyan, fontSize: "26px" }} />,
-          },
-          {
-            title: "3",
-            subtitle: "Tool Integrations Active",
-            progress: "1.00",
-            increase: "+0%",
-            icon: <IntegrationInstructionsIcon sx={{ color: COLORS.brightBlue, fontSize: "26px" }} />,
-          },
-        ].map((stat, index) => (
+        {stats.map((stat, index) => (
           <Box
             key={index}
-            gridColumn="span 3"
+            gridColumn="span 4"
             backgroundColor={COLORS.lightThemeBackground}
             display="flex"
             alignItems="center"
             justifyContent="center"
             borderRadius="8px"
             p="16px"
-            sx={{
-              "&:hover": {
-                backgroundColor: COLORS.hoverBackground,
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: COLORS.hoverBackground } }}
           >
             <StatBox {...stat} />
           </Box>
         ))}
 
-        {/* Perfomix System Overview */}
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={COLORS.lightThemeBackground}
-          p="30px"
-        >
-          <Typography variant="h5" fontWeight="600">
-            Perfomix System Overview
-          </Typography>
+        {/* System Overview */}
+        <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground} p="30px">
+          <Typography variant="h5" fontWeight="600">Perfomix System Overview</Typography>
           <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
             <ProgressCircle size={125} />
-            <Typography variant="p" color={COLORS.greenAccent} sx={{ mt: "15px" }}>
+            <Typography variant="body2" color={COLORS.greenAccent} sx={{ mt: "15px" }}>
               Automated KPI Tracking & Performance Insights
             </Typography>
-            <Typography>
-              Provides real-time anomaly detection and personalized feedback to improve employee productivity.
-            </Typography>
+            <Typography variant="body2">Real-time anomaly detection and personalized feedback.</Typography>
           </Box>
         </Box>
 
-        {/* KPI Tracking and Anomaly Detection */}
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={COLORS.lightThemeBackground}
-        >
-         <Typography
-  variant="p"
-  fontWeight="600"
-  sx={{
-    padding: "100px 100px 0 90px",
-  
-  }}
->
+        {/* KPI Bar Chart */}
+        <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground}>
+          <Typography variant="body1" fontWeight="600" sx={{ padding: "20px" }}>
             Real-Time KPI Tracking & Anomaly Detection
           </Typography>
-          <Box height="250px" mt="-20px">
+          <Box height="250px" mt="-10px">
             <BarChart isDashboard={true} />
           </Box>
         </Box>
 
-        {/* NLP-Based Recommendations */}
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={COLORS.lightThemeBackground}
-          padding="30px"
-        >
-          <Typography variant="p" fontWeight="600" sx={{ marginBottom: "10px" }}>
+        {/* NLP Chart */}
+        <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground} p="10px">
+          <Typography variant="body1" fontWeight="600" mb="10px">
             NLP-Based Employee Recommendations
           </Typography>
-          <Box height="200px">
-            <GeographyChart isDashboard={true} />
+          <Box height="100px">
+            {/* <GeographyChart isDashboard={true} /> */}
+           <RecommendationsGrid isDashboard={true} />
           </Box>
         </Box>
       </Box>
 
-      {/* Revenue and Transactions Section */}
-      <Box display="flex" justifyContent="space-between" gap="20px" mt="15px">
-        {/* Total Performance Score */}
+      {/* Total Performance Score Full Width */}
+      <Box
+        display="grid"
+        gridTemplateColumns="repeat(12, 1fr)"
+        gap="20px"
+        mt="20px"
+      >
         <Box
-          gridColumn="span 6"
+          gridColumn="1 / -1"
           backgroundColor={COLORS.lightThemeBackground}
-          p="20px"
+          p="5px"
           borderRadius="8px"
           display="flex"
           flexDirection="column"
@@ -196,57 +179,15 @@ function AdminDashboard() {
                 Total Performance Score
               </Typography>
               <Typography variant="h3" fontWeight="bold" color={COLORS.brightBlue}>
-                85% {/* Sample data reflecting overall performance */}
+                {adminDashboardData?.stats?.kpi_achievement_rate
+                  ? `${adminDashboardData.stats.kpi_achievement_rate}%`
+                  : "N/A"}
               </Typography>
             </Box>
           </Box>
-          <Box height="150px" width="1200px" mt="15px">
+          <Box height="180px" width="100%" mt="20px">
             <LineChart isDashboard={true} chartHeight="100%" chartWidth="100%" />
           </Box>
-        </Box>
-
-        {/* Recent Performance Reports */}
-        <Box
-          gridColumn="span 6"
-          backgroundColor={COLORS.lightThemeBackground}
-          p="20px"
-          borderRadius="8px"
-          overflow="auto"
-          display="flex"
-          flexDirection="column"
-        >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${COLORS.brightBlue}`}
-            p="15px"
-          >
-            <Typography color={COLORS.lightThemeText} variant="h5" fontWeight="600">
-              Recent Performance Reports
-            </Typography>
-          </Box>
-          {mockTransactions.slice(0, 2).map((transaction, i) => (
-            <Box
-              key={`${transaction.txId}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${COLORS.brightBlue}`}
-              p="15px"
-            >
-              <Box>
-                <Typography color={COLORS.brightBlue} variant="h5" fontWeight="600">
-                  {transaction.txId}
-                </Typography>
-                <Typography color={COLORS.lightThemeText}>{transaction.user}</Typography>
-              </Box>
-              <Box color={COLORS.lightThemeText}>{transaction.date}</Box>
-              <Box backgroundColor={COLORS.brightBlue} p="5px 10px" borderRadius="4px">
-                {transaction.cost}
-              </Box>
-            </Box>
-          ))}
         </Box>
       </Box>
     </AdminDashboardDiv>

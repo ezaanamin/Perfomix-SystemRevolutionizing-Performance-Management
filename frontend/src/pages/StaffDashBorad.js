@@ -3,11 +3,18 @@ import { UserContext } from "../ContextState/contextState";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import RecommendationsGrid from "../components/RecommendationsGrid";
+import { latest_performance, performance_report } from '../API/slice/API';
+import { useDispatch, useSelector } from 'react-redux';
+import { useState } from "react";
 
 function StaffDashboard() {
   const userContext = useContext(UserContext);
   const navigate = useNavigate();
   const { Role, Name } = userContext;
+  const [downloading, setDownloading] = useState(false);
+    const dispatch = useDispatch();
+  
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token");
@@ -15,6 +22,34 @@ function StaffDashboard() {
       navigate("/");
     }
   }, [Role, navigate]);
+
+    const handleDownloadReport = async () => {
+      setDownloading(true);
+      try {
+        const resultAction = await dispatch(performance_report());
+  
+        if (performance_report.fulfilled.match(resultAction)) {
+          const blob = resultAction.payload;
+          const url = window.URL.createObjectURL(new Blob([blob]));
+          const link = document.createElement('a');
+          link.href = url;
+  
+          // Set a filename, adjust extension as needed
+          link.setAttribute('download', 'performance_report.pdf');
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+        } else {
+          alert('Failed to download report');
+        }
+      } catch (err) {
+        alert('An error occurred during download');
+        console.error(err);
+      } finally {
+        setDownloading(false);
+      }
+    };
 
   const COLORS = {
     lightThemeBackground: "#F5F9FF",
@@ -28,33 +63,36 @@ function StaffDashboard() {
   return (
     <Box padding={3}>
       {/* Staff Info */}
-      <Typography variant="h4" fontWeight="bold" color={COLORS.lightThemeText} gutterBottom>
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        color={COLORS.lightThemeText}
+        gutterBottom
+      >
         Staff Dashboard - {Name}
       </Typography>
 
-      {/* View Profile Button */}
-      <Box marginBottom="20px">
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: COLORS.brightBlue,
-            padding: "12px 30px",
-            fontWeight: "600",
-            borderRadius: "8px",
-            "&:hover": {
-              backgroundColor: COLORS.vividOrange,
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-              transform: "scale(1.05)",
-              transition: "all 0.3s ease-in-out",
-            },
-          }}
-          onClick={() => navigate("/profile")}  // Replace '/profile' with your profile route
+      {/* === Recommendations section === */}
+      <Box
+        backgroundColor={COLORS.lightThemeBackground}
+        padding="20px"
+        borderRadius="12px"
+        boxShadow="0 6px 15px rgba(0, 0, 0, 0.08)"
+        marginBottom="30px"
+      >
+        <Typography
+          variant="h6"
+          fontWeight="600"
+          color={COLORS.lightThemeText}
+          marginBottom="15px"
         >
-          View Profile
-        </Button>
+          Course Recommendations
+        </Typography>
+
+        <RecommendationsGrid isDashboard={true} />
       </Box>
 
-      {/* Report Download */}
+      {/* Report Download Section */}
       <Box
         height="200px"
         width="100%"
@@ -66,10 +104,19 @@ function StaffDashboard() {
         flexDirection="column"
         justifyContent="center"
         alignItems="center"
-        marginTop="20px"
       >
-        <Typography variant="h5" fontWeight="600" color={COLORS.lightThemeText} display="flex" alignItems="center" mb="20px">
-          <DownloadIcon fontSize="large" style={{ color: COLORS.vividOrange, marginRight: "8px" }} />
+        <Typography
+          variant="h5"
+          fontWeight="600"
+          color={COLORS.lightThemeText}
+          display="flex"
+          alignItems="center"
+          mb="20px"
+        >
+          <DownloadIcon
+            fontSize="large"
+            style={{ color: COLORS.vividOrange, marginRight: "8px" }}
+          />
           Report and Download Report
         </Typography>
 
@@ -87,32 +134,12 @@ function StaffDashboard() {
               transition: "all 0.3s ease-in-out",
             },
           }}
-          onClick={() => console.log("Download Report")}
+                    onClick={handleDownloadReport}
+
         >
           Download Report
         </Button>
 
-        {/* View Recommended Courses Button */}
-        <Box marginTop="20px">
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: COLORS.softCyan,
-              padding: "12px 30px",
-              fontWeight: "600",
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: COLORS.vividOrange,
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                transform: "scale(1.05)",
-                transition: "all 0.3s ease-in-out",
-              },
-            }}
-            onClick={() => navigate("/recommended-courses")}  // Replace '/recommended-courses' with your route
-          >
-            View Recommended Courses
-          </Button>
-        </Box>
       </Box>
     </Box>
   );
