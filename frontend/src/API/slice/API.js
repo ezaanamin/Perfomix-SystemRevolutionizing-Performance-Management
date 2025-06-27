@@ -116,6 +116,22 @@ export const performance_with_courses = createAsyncThunk(
   }
 );
 
+export const my_performance_with_courses = createAsyncThunk(
+  'kpi/my_performance_with_courses',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/get/my_low_performance_recommendations`,
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data || 'Unknown error while fetching recommendations');
+    }
+  }
+);
+
+
 
 const createKpiDetectionThunk = (role) =>
   createAsyncThunk(`kpi/detect_${role}`, async (userId, thunkAPI) => {
@@ -203,6 +219,24 @@ export const performance_report = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/performance_report?download=1`, {
+        ...getAuthHeaders(),
+        responseType: 'blob', 
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('performance_report error:', error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || 'Unknown error downloading report'
+      );
+    }
+  }
+);
+export const my_performance_report = createAsyncThunk(
+  'api/my_performance_report',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}//my_performance_report?download=1`, {
         ...getAuthHeaders(),
         responseType: 'blob', 
       });
@@ -333,8 +367,12 @@ const initialState = {
   usersData: [],
   performance_data:[],
     performance_report:[],
+     myperformance_report:[],
   low_performance_with_courses:[],
+  my_low_performance_with_courses:[],
+
   performance_status: 'idle',
+  myperformance_status:'idle',
   activeKpisByRole: {}, 
   loginStatus: 'idle',
   kpiStatus: 'idle',
@@ -451,7 +489,19 @@ const APISlice = createSlice({
 
       })
       .addCase(performance_with_courses.rejected, (state, action) => {
-        state.performance_status = 'failed';
+        state.myperformance_status = 'failed';
+        state.performance_status = action.payload;
+      })
+            .addCase(my_performance_with_courses.pending, (state) => {
+        state.performance_status = 'loading';
+      })
+      .addCase(my_performance_with_courses.fulfilled, (state, action) => {
+        state.myperformance_status = 'succeeded';
+                state.my_low_performance_with_courses = action.payload;
+
+      })
+      .addCase(my_performance_with_courses.rejected, (state, action) => {
+        state.myperformance_status = 'failed';
         state.performance_status = action.payload;
       })
 
@@ -623,6 +673,18 @@ const APISlice = createSlice({
         state.performance_report = action.payload;
       })
       .addCase(performance_report.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch latest performance';
+      })
+        .addCase(my_performance_report.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(my_performance_report.fulfilled, (state, action) => {
+        state.loading = false;
+        state.myperformance_report = action.payload;
+      })
+      .addCase(my_performance_report.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch latest performance';
       })

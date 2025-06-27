@@ -1,55 +1,113 @@
-import React, { useContext, useEffect } from "react";
-import { UserContext } from "../ContextState/contextState";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, CircularProgress } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import RecommendationsGrid from "../components/RecommendationsGrid";
-import { latest_performance, performance_report } from '../API/slice/API';
-import { useDispatch, useSelector } from 'react-redux';
-import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  my_performance_with_courses,
+  my_performance_report,
+} from "../API/slice/API";
+import { useContext } from 'react';
+import { UserContext } from "../ContextState/contextState";
+
+function base64UrlDecode(str) {
+
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+
+  while (str.length % 4) {
+    str += "=";
+  }
+  try {
+    return atob(str);
+  } catch (e) {
+    console.error("Failed to decode base64url:", e);
+    return null;
+  }
+}
+
+
+function decodeJWT(token) {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const payload = parts[1];
+  const decoded = base64UrlDecode(payload);
+  if (!decoded) return null;
+  try {
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
 
 function StaffDashboard() {
-  const userContext = useContext(UserContext);
   const navigate = useNavigate();
-  const { Role, Name } = userContext;
+  const dispatch = useDispatch();
+  const userContext = useContext(UserContext);
+  const {    userInfo,
+    setUserInfo } = userContext;
+
   const [downloading, setDownloading] = useState(false);
-    const dispatch = useDispatch();
-  
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  // const [userInfo, setUserInfo] = useState({ Name: "", Role: "" });
+
+  // Extract recommendations from Redux
+  const recommendations = useSelector(
+    (state) => state.API.my_performance_with_courses_data || []
+  );
+  const recommendationsError = useSelector(
+    (state) => state.API.my_performance_with_courses_error
+  );
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("access_token");
-    if (Role !== "staff" || !accessToken) {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
       navigate("/");
+      return;
     }
-  }, [Role, navigate]);
+    const decoded = decodeJWT(token);
+    if (!decoded) {
+      navigate("/");
+      return;
+    }
+    setUserInfo({ Name: decoded.sub || "", Role: decoded.role || "" });
 
-    const handleDownloadReport = async () => {
-      setDownloading(true);
-      try {
-        const resultAction = await dispatch(performance_report());
-  
-        if (performance_report.fulfilled.match(resultAction)) {
-          const blob = resultAction.payload;
-          const url = window.URL.createObjectURL(new Blob([blob]));
-          const link = document.createElement('a');
-          link.href = url;
-  
-          
-          link.setAttribute('download', 'performance_report.pdf');
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-        } else {
-          alert('Failed to download report');
-        }
-      } catch (err) {
-        alert('An error occurred during download');
-        console.error(err);
-      } finally {
-        setDownloading(false);
+    setLoadingRecommendations(true);
+    dispatch(my_performance_with_courses())
+      .unwrap()
+      .catch((err) => {
+        console.error("Failed to fetch recommendations:", err);
+      })
+      .finally(() => {
+        setLoadingRecommendations(false);
+      });
+  }, [dispatch, navigate]);
+
+  const handleDownloadReport = async () => {
+    setDownloading(true);
+    try {
+      const resultAction = await dispatch(my_performance_report());
+      if (my_performance_report.fulfilled.match(resultAction)) {
+        const blob = resultAction.payload;
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "performance_report.pdf");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert("Failed to download report");
       }
-    };
+    } catch (err) {
+      alert("An error occurred during download");
+      console.error(err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const COLORS = {
     lightThemeBackground: "#F5F9FF",
@@ -62,17 +120,15 @@ function StaffDashboard() {
 
   return (
     <Box padding={3}>
-      {}
       <Typography
         variant="h4"
         fontWeight="bold"
         color={COLORS.lightThemeText}
         gutterBottom
       >
-        Staff Dashboard - {Name}
+        Staff Dashboard - {userInfo.Name}
       </Typography>
 
-      {}
       <Box
         backgroundColor={COLORS.lightThemeBackground}
         padding="20px"
@@ -89,10 +145,28 @@ function StaffDashboard() {
           Course Recommendations
         </Typography>
 
-        <RecommendationsGrid isDashboard={true} />
+        {loadingRecommendations ? (
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height="150px"
+          >
+            <CircularProgress />
+          </Box>
+        ) : recommendationsError ? (
+          <Typography color="error">
+            Failed to load recommendations: {recommendationsError}
+          </Typography>
+        ) : (
+          <RecommendationsGrid
+            isDashboard={true}
+            recommendations={recommendations}
+            filterUser={userInfo.Name || "none"}
+          />
+        )}
       </Box>
 
-      {}
       <Box
         height="200px"
         width="100%"
@@ -122,6 +196,7 @@ function StaffDashboard() {
 
         <Button
           variant="contained"
+          disabled={downloading}
           sx={{
             backgroundColor: COLORS.brightBlue,
             padding: "12px 30px",
@@ -134,12 +209,10 @@ function StaffDashboard() {
               transition: "all 0.3s ease-in-out",
             },
           }}
-                    onClick={handleDownloadReport}
-
+          onClick={handleDownloadReport}
         >
-          Download Report
+          {downloading ? "Downloading..." : "Download Report"}
         </Button>
-
       </Box>
     </Box>
   );

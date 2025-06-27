@@ -40,6 +40,7 @@ function LoginField() {
               localStorage.setItem('access_token', response.payload.access_token);
                 
               const data = jwtDecode(response.payload.access_token);
+              console.log(data,'data')
               data.role = data.role.toLowerCase();
               console.log(data.role, 'EZAAN');
               const expirationTime = data.exp * 1000; 
@@ -64,7 +65,7 @@ function LoginField() {
                 SetRole('manager'); 
                 navigate('/manager');
               } else {
-                SetRole('staff');
+                SetRole(data.role);
                 navigate('/staff');
               }
             }

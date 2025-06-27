@@ -56,7 +56,10 @@ const Item = ({ title, to, icon, selected, setSelected, isCollapsed }) => {
 const SidebarPerfomix = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
-  const { Role } = useContext(UserContext);
+  const { Role,  userInfo,
+    setUserInfo  } = useContext(UserContext);
+
+    console.log(userInfo,'hello sidebar')
 
   return (
     <Box
@@ -123,10 +126,10 @@ const SidebarPerfomix = () => {
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0", color: "#4B7DE7" }}
                 >
-                  Ed Roh
+                 {userInfo.Name}
                 </Typography>
                 <Typography variant="h5" sx={{ color: "#4B7DE7" }}>
-                  {Role === "admin" ? "Admin" : Role === "manager" ? "Line Manager" : "Staff"}
+                  {Role === "admin" ? "Admin" : Role === "manager" ? "Line Manager" : userInfo.Role}
                 </Typography>
               </Box>
             </Box>
@@ -224,7 +227,7 @@ const SidebarPerfomix = () => {
             )}
 
         
-            {Role !== "staff" && (
+            {Role !== "admin" || Role !== "manager"  && (
               <Typography
                 variant="p"
                 sx={{ m: "15px 0 5px 20px", color: "#4B7DE7" }}

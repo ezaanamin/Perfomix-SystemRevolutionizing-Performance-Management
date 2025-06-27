@@ -10,7 +10,7 @@ import {
   Chip,
 } from "@mui/material";
 
-const RecommendationsGrid = ({ isDashboard = false }) => {
+const RecommendationsGrid = ({ isDashboard = false, filterUser = null }) => {
   const dispatch = useDispatch();
 
   const {
@@ -27,17 +27,23 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
 
   useEffect(() => {
     if (performance_status === "succeeded") {
-      let mappedRows = low_performance_with_courses.map((item) => ({
-        id: item.RecommendationID,
-        userName: item.UserName || "N/A",
-        role: item.Role || "N/A",
-        kpiName: item.KPIName || "N/A",
-        actualValue: item.ActualValue ?? "N/A",
-        targetValue: item.TargetValue ?? "N/A",
-        performancePercent: item.PerformancePercent || "0%",
-        timestamp: item.Timestamp || "N/A",
-        courses: item.RecommendationText || "No courses recommended",
-      }));
+      let mappedRows = low_performance_with_courses
+        .filter((item) => {
+          // Filter by userName if filterUser is set and not "none"
+          if (!filterUser || filterUser === "none") return true;
+          return item.UserName === filterUser;
+        })
+        .map((item) => ({
+          id: item.RecommendationID,
+          userName: item.UserName || "N/A",
+          role: item.Role || "N/A",
+          kpiName: item.KPIName || "N/A",
+          actualValue: item.ActualValue ?? "N/A",
+          targetValue: item.TargetValue ?? "N/A",
+          performancePercent: item.PerformancePercent || "0%",
+          timestamp: item.Timestamp || "N/A",
+          courses: item.RecommendationText || "No courses recommended",
+        }));
 
       if (isDashboard) {
         mappedRows = mappedRows.slice(0, 3);
@@ -45,7 +51,7 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
 
       setRows(mappedRows);
     }
-  }, [low_performance_with_courses, performance_status, isDashboard]);
+  }, [low_performance_with_courses, performance_status, isDashboard, filterUser]);
 
   const columns = isDashboard
     ? [
@@ -110,7 +116,6 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         />
       )}
 
-
       {performance_status === "loading" && (
         <Box
           sx={{
@@ -127,7 +132,6 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         </Box>
       )}
 
-
       {performance_status === "failed" && (
         <Box sx={{ textAlign: "center", color: "error.main", mt: 4 }}>
           <Typography variant="h6">Failed to load recommendations</Typography>
@@ -136,7 +140,6 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
           </Typography>
         </Box>
       )}
-
 
       {performance_status === "succeeded" && rows.length === 0 && (
         <Typography
@@ -147,7 +150,6 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         </Typography>
       )}
 
-  
       {performance_status === "succeeded" && rows.length > 0 && (
         <DataGrid
           rows={rows}

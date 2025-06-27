@@ -85,6 +85,10 @@ try:
 except Error as e:
     print(f"❌ Error while connecting to MySQL: {e}")
 
+from werkzeug.security import generate_password_hash
+import mysql.connector
+
+# Assuming you have your app.config already defined somewhere
 def get_db_connection():
     return mysql.connector.connect(
         host=app.config['DB_HOST'],
@@ -92,6 +96,33 @@ def get_db_connection():
         password=app.config['DB_PASSWORD'],
         database=app.config['DB_NAME']
     )
+
+def update_user_password(username, new_plain_password):
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+
+        # Hash the new password
+        hashed_password = generate_password_hash(new_plain_password)
+
+        # Update the password for the given username
+        update_query = "UPDATE User SET Password = %s WHERE Name = %s"
+        cursor.execute(update_query, (hashed_password, username))
+
+        db.commit()
+
+        print(f"✅ Password for '{username}' updated successfully.")
+
+    except Exception as e:
+        print(f"❌ Error updating password for '{username}': {e}")
+
+    finally:
+        cursor.close()
+        db.close()
+
+# # Call this once to update Ali Khan's password
+# update_user_password("Ali Khan", "SoftwareEng123")
+
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_REPO_OWNER = os.getenv("GITHUB_REPO_OWNER")
 GITHUB_REPOS = os.getenv("GITHUB_REPOS")
@@ -1038,6 +1069,77 @@ def get_low_performance_recommendations():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/get/my_low_performance_recommendations', methods=['GET'])
+@jwt_required()
+def get_my_low_performance_recommendations():
+    try:
+        current_user_name = get_jwt_identity()  # assumes you store Name in JWT identity
+
+        mydb = get_db_connection()
+        if mydb is None:
+            return jsonify({"error": "Database connection failed."}), 500
+
+        mycursor = mydb.cursor()
+
+        query = """
+            SELECT 
+                r.RecommendationID,
+                u.Name AS UserName,
+                u.Role,
+                k.KPIName,
+                pd.ActualValue,
+                k.TargetValue,
+                ROUND((pd.ActualValue / k.TargetValue) * 100, 2) AS PerformancePercent,
+                r.Timestamp,
+                r.Text AS RecommendationText,
+                r.course_name
+            FROM Recommendation r
+            JOIN User u ON r.UserID = u.UserID
+            JOIN KPI k ON r.KPIID = k.KPIID
+            JOIN PerformanceData pd ON pd.UserID = r.UserID AND pd.KPIID = r.KPIID
+            WHERE u.Name = %s
+            AND pd.Timestamp = (
+                SELECT MAX(pd2.Timestamp) 
+                FROM PerformanceData pd2 
+                WHERE pd2.UserID = r.UserID AND pd2.KPIID = r.KPIID
+            )
+            AND ROUND((pd.ActualValue / k.TargetValue) * 100, 2) < 50
+            ORDER BY r.Timestamp DESC
+            LIMIT 100;
+        """
+
+        params = (current_user_name,)
+
+        mycursor.execute(query, params)
+        data = mycursor.fetchall()
+
+        columns = [
+            "RecommendationID",
+            "UserName",
+            "Role",
+            "KPIName",
+            "ActualValue",
+            "TargetValue",
+            "PerformancePercent",
+            "Timestamp",
+            "RecommendationText",
+            "CourseName",
+        ]
+
+        results = []
+        for row in data:
+            record = dict(zip(columns, row))
+            ts = record["Timestamp"]
+            if hasattr(ts, "strftime"):
+                record["Timestamp"] = ts.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            record["PerformancePercent"] = f"{record['PerformancePercent']}%"
+            results.append(record)
+
+        return jsonify(results)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/get/performance_insights', methods=['GET'])
 def get_performance_insights():
     try:
@@ -1301,7 +1403,95 @@ def performance_report():
         print(f"❌ Error in performance report: {e}")
         return jsonify({"error": str(e)}), 500
     
+@app.route('/my_performance_report', methods=['GET'])
+@jwt_required()
+def my_performance_report():
+    try:
+        current_user_name = get_jwt_identity()  # assuming this holds the Name string
 
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        date_filter = request.args.get('date')
+        download = request.args.get('download')
+
+        query = """
+            SELECT 
+                u.Name AS UserName,
+                k.KPIName,
+                pd.ActualValue,
+                k.TargetValue,
+                ROUND(LEAST((pd.ActualValue / k.TargetValue) * 100, 100), 2) AS PerformancePercent,
+                pd.Timestamp
+            FROM PerformanceData pd
+            JOIN User u ON pd.UserID = u.UserID
+            JOIN KPI k ON pd.KPIID = k.KPIID
+            WHERE u.Name = %s
+        """
+        params = (current_user_name,)
+
+        if date_filter:
+            query += " AND DATE(pd.Timestamp) = %s"
+            params += (date_filter,)
+
+        query += " ORDER BY pd.Timestamp DESC"
+
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+
+        cursor.close()
+        db.close()
+
+        if download == '1':
+            buffer = BytesIO()
+            pdf = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+
+            pdf.setFont("Helvetica-Bold", 14)
+            pdf.drawString(50, height - 50, f"{current_user_name} Performance Report")
+
+            pdf.setFont("Helvetica", 10)
+            y = height - 80
+
+            headers = ["UserName", "KPIName", "Actual", "Target", "Performance (%)", "Timestamp"]
+            col_positions = [50, 150, 300, 350, 420, 500]
+
+            for i, header in enumerate(headers):
+                pdf.drawString(col_positions[i], y, header)
+
+            y -= 20
+
+            for row in data:
+                if y < 50:
+                    pdf.showPage()
+                    y = height - 50
+
+                pdf.drawString(col_positions[0], y, row['UserName'])
+                pdf.drawString(col_positions[1], y, row['KPIName'])
+                pdf.drawString(col_positions[2], y, str(row['ActualValue']))
+                pdf.drawString(col_positions[3], y, str(row['TargetValue']))
+                pdf.drawString(col_positions[4], y, f"{row['PerformancePercent']}%")
+                pdf.drawString(col_positions[5], y, row['Timestamp'].strftime("%Y-%m-%d %H:%M"))
+
+                y -= 18
+
+            pdf.save()
+            buffer.seek(0)
+
+            filename = f"{current_user_name.replace(' ', '_')}_Performance_Report.pdf"
+
+            return send_file(
+                buffer,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/pdf'
+            )
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        print(f"❌ Error in my performance report: {e}")
+        return jsonify({"error": str(e)}), 500
 @app.route('/user_performance_rating', methods=['GET'])
 @jwt_required()
 def user_performance_rating():

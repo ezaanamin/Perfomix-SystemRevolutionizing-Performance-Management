@@ -88,7 +88,7 @@ const AnalyzeKpiPerformanceModal = ({
             </Box>
           ))
         ) : (
-          <Typography>No KPI performance data available.</Typography>
+          <Typography>No Active KPI </Typography>
         )}
 
         <KPIButton
