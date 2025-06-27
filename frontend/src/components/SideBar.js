@@ -80,7 +80,7 @@ const SidebarPerfomix = () => {
     >
       <Sidebar collapsed={isCollapsed} style={{ height: "100vh", backgroundColor: "#D0DBE9" }}>
         <Menu iconShape="square">
-          {/* LOGO AND MENU ICON */}
+   
           <MenuItem
             onClick={() => setIsCollapsed(!isCollapsed)}
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
@@ -132,7 +132,7 @@ const SidebarPerfomix = () => {
             </Box>
           )}
 
-          {/* Menu Items */}
+    
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"

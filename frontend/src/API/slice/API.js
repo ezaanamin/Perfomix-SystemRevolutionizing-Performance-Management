@@ -14,14 +14,12 @@ const getAuthHeaders = () => {
   };
 };
 
-// --- Thunks ---
 export const fetchActiveKpisByRole = createAsyncThunk(
   'kpi/fetchActiveByRole',
   async (role, { rejectWithValue }) => {
     try {
-      // Send role exactly as received, without lowercasing or removing spaces
       const response = await axios.get(
-        `${API_BASE_URL}/active-kpis/${encodeURIComponent(role)}`,  // encode URI component for safety
+        `${API_BASE_URL}/active-kpis/${encodeURIComponent(role)}`,  
         getAuthHeaders()
       );
       return { role, data: response.data };
@@ -64,7 +62,6 @@ export const ADDKPI = createAsyncThunk('kpi/add', async (kpiData, { rejectWithVa
     return rejectWithValue(error?.response?.data || 'Unknown error adding KPI');
   }
 });
-// API slice file (e.g., API.js or slice/API.js)
 
 
 export const fetchUsers = createAsyncThunk('API/get_users', async (_, { rejectWithValue }) => {
@@ -78,6 +75,7 @@ export const fetchUsers = createAsyncThunk('API/get_users', async (_, { rejectWi
 export const Performance_Data = createAsyncThunk('API/performance_Data', async (_, { rejectWithValue }) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/get/performance_data`);
+  console.log(response.data,'performance_ezaan')
     return response.data;
   } catch (error) {
     return rejectWithValue(error?.response?.data || 'Unknown error fetching users');
@@ -122,16 +120,13 @@ export const performance_with_courses = createAsyncThunk(
 const createKpiDetectionThunk = (role) =>
   createAsyncThunk(`kpi/detect_${role}`, async (userId, thunkAPI) => {
     try {
-      // POST request to backend endpoint per role
       const response = await axios.post(
         `${API_BASE_URL}/detect_kpi/${role}/${userId}`,
-        {}, // POST body empty
+        {}, 
         getAuthHeaders()
       );
-      // Expect response.data.detected_kpis = { KPIName: value, ... }
       return response.data.detected_kpis;
     } catch (error) {
-      // Return error message to rejected action
       return thunkAPI.rejectWithValue(error.response?.data || error.message);
     }
   });
@@ -183,7 +178,6 @@ export const updateSettings = createAsyncThunk(
     }
   }
 );
-//latest_performance
 
 export const latest_performance = createAsyncThunk(
   'API/latest_performance',
@@ -210,10 +204,10 @@ export const performance_report = createAsyncThunk(
     try {
       const response = await axios.get(`${API_BASE_URL}/performance_report?download=1`, {
         ...getAuthHeaders(),
-        responseType: 'blob', // important: tells axios to treat response as binary data
+        responseType: 'blob', 
       });
 
-      return response.data; // this is a Blob (PDF file)
+      return response.data;
     } catch (error) {
       console.error('performance_report error:', error.response || error.message);
       return rejectWithValue(
@@ -233,7 +227,7 @@ export const fetchUserPerformanceRating = createAsyncThunk(
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
       });
-      return response.data; // { UserName, PerformancePercent, BotCount, Rating, LastUpdated }
+      return response.data; 
     } catch (error) {
       console.error('fetchUserPerformanceRating error:', error.response || error.message);
       return rejectWithValue(
@@ -252,7 +246,7 @@ export const fetchAdminDashboardData = createAsyncThunk(
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
       });
-      return response.data; // whatever shape your backend returns
+      return response.data;
     } catch (error) {
       console.error('fetchAdminDashboardData error:', error.response || error.message);
       return rejectWithValue(
@@ -262,7 +256,74 @@ export const fetchAdminDashboardData = createAsyncThunk(
   }
 );
 
-// --- Initial State ---
+export const fetchGitHubUsers = createAsyncThunk(
+  "API/fetchUsersWithGitHubActivity",
+  async (_, { rejectWithValue }) => {
+    try {
+      // 1. Fetch users from your backend with auth header
+      const usersResponse = await axios.get(`${API_BASE_URL}/get_users`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const users = usersResponse.data;
+      console.log("Users from DB:", users);
+
+      // 2. Fetch GitHub issues (no auth needed here)
+      const issuesResponse = await axios.get(
+        "https://api.github.com/repos/facebook/react/issues?per_page=30"
+      );
+      const issues = issuesResponse.data.filter(issue => !issue.pull_request);
+      console.log("Filtered GitHub issues:", issues);
+
+      // 3. Map GitHub issues to your users by index (loop users if fewer than issues)
+      const enriched = issues.map((issue, idx) => {
+        const user = users[idx % users.length];
+        const created = new Date(issue.created_at);
+
+        return {
+          id: user.user_id,        // from your DB
+          login: user.name,        // from your DB
+          avatar_url: issue.user.avatar_url,
+          html_url: issue.user.html_url || `https://github.com/${issue.user.login}`,
+          email: user.email,
+          role: user.role,
+          team_name: user.team_name,
+          manager_id: user.manager_id,
+          activity: {
+            comment_length: issue.body ? issue.body.length : 0,
+            issue_id: issue.number,
+            issue_status: issue.state === "open" ? 0 : 1,
+            issue_resolved: issue.closed_at ? 1 : 0,
+            conversation_comments: issue.comments,
+            day: created.getDate(),
+            month: created.getMonth() + 1,
+            year: created.getFullYear(),
+            hour: created.getHours(),
+            minute: created.getMinutes(),
+            second: created.getSeconds(),
+            day_issue_created_date: created.getDate(),
+            month_issue_created_month: created.getMonth() + 1,
+            year_issue_created_year: created.getFullYear(),
+            activity_Closing_issue: issue.closed_at ? 1 : 0,
+            activity_Commenting_issue: issue.comments > 0 ? 1 : 0,
+            activity_Opening_issue: 1,
+            activity_Reopening_issue: 0,
+            activity_Transferring_issue: 0,
+          },
+        };
+      });
+
+      return enriched;
+    } catch (error) {
+      console.error("fetchUsersWithGitHubActivity error:", error.response || error.message);
+      return rejectWithValue(
+        error?.response?.data?.error || error.message || "Failed to fetch users with GitHub activity"
+      );
+    }
+  }
+);
+
 
 const initialState = {
   loginData: null,
@@ -274,7 +335,7 @@ const initialState = {
     performance_report:[],
   low_performance_with_courses:[],
   performance_status: 'idle',
-  activeKpisByRole: {},   // store KPIs keyed by role, e.g. { "admin": [...], "user": [...] }
+  activeKpisByRole: {}, 
   loginStatus: 'idle',
   kpiStatus: 'idle',
   userStatus: 'idle',
@@ -315,10 +376,13 @@ settingsError: null,
   adminDashboardData: null,
 adminDashboardStatus: 'idle',
 adminDashboardError: null,
+ githubUsers: [],
+  githubUserStatus: 'idle',
+  githubUserError: null,
 
 };
 
-// --- Slice ---
+
 
 const APISlice = createSlice({
   name: 'API',
@@ -326,7 +390,7 @@ const APISlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Login
+
       .addCase(Login.pending, (state) => {
         state.loginStatus = 'loading';
       })
@@ -340,7 +404,7 @@ const APISlice = createSlice({
         state.loginError = action.payload;
       })
 
-      // KPI Fetch
+
       .addCase(KPI.pending, (state) => {
         state.kpiStatus = 'loading';
       })
@@ -353,13 +417,12 @@ const APISlice = createSlice({
         state.kpiError = action.payload;
       })
 
-      // Users Fetch
+   
       .addCase(fetchUsers.pending, (state) => {
         state.userStatus = 'loading';
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.userStatus = 'succeeded';
-        // state.performance_data = action.payload;
           state.usersData = action.payload;
 
       })
@@ -367,18 +430,18 @@ const APISlice = createSlice({
         state.userStatus = 'failed';
         state.userError = action.payload;
       })
+  builder
     .addCase(Performance_Data.pending, (state) => {
-        state.performance_status = 'loading';
-      })
-      .addCase(Performance_Data.fulfilled, (state, action) => {
-        state.performance_status = 'succeeded';
-                state.performance_data = action.payload;
-
-      })
-      .addCase(Performance_Data.rejected, (state, action) => {
-        state.performance_status = 'failed';
-        state.performance_status = action.payload;
-      })
+      state.performance_status = 'loading';
+    })
+    .addCase(Performance_Data.fulfilled, (state, action) => {
+      state.performance_status = 'succeeded';
+      state.performance_data = action.payload;
+    })
+    .addCase(Performance_Data.rejected, (state, action) => {
+      state.performance_status = 'failed';
+      state.performance_error = action.payload;
+    })
          .addCase(performance_with_courses.pending, (state) => {
         state.performance_status = 'loading';
       })
@@ -391,7 +454,7 @@ const APISlice = createSlice({
         state.performance_status = 'failed';
         state.performance_status = action.payload;
       })
-      // Edit KPI
+
       .addCase(editKpi.pending, (state) => {
         state.editKpiStatus = 'loading';
       })
@@ -406,7 +469,7 @@ const APISlice = createSlice({
         state.editKpiError = action.payload;
       })
 
-      // Bot Detection
+
       .addCase(Bot_Detection.pending, (state) => {
         state.editKpiStatus = 'loading';
       })
@@ -419,7 +482,7 @@ const APISlice = createSlice({
         state.editKpiError = action.payload;
       })
 
-      // User KPI History
+  
       .addCase(fetchUserKpiHistory.pending, (state) => {
         state.userKpiHistoryStatus = 'loading';
         state.userKpiHistory = [];
@@ -433,9 +496,9 @@ const APISlice = createSlice({
         state.userKpiHistoryError = action.payload;
       })
 
-      // Software Engineer KPI Detection
+  
    builder
-  // Software Engineer KPI Detection
+
   .addCase(detectSoftwareEngineerKPIs.pending, (state) => {
     state.detectedKpisStatus.software_engineer = 'loading';
     state.detectedKpisError.software_engineer = null;
@@ -451,7 +514,6 @@ const APISlice = createSlice({
       action.payload?.error || action.error?.message || 'Failed to fetch software engineer KPIs';
   })
 
-  // Project Manager KPI Detection
   .addCase(detectProjectManagerKPIs.pending, (state) => {
     state.detectedKpisStatus.project_manager = 'loading';
     state.detectedKpisError.project_manager = null;
@@ -467,7 +529,6 @@ const APISlice = createSlice({
       action.payload?.error || action.error?.message || 'Failed to fetch project manager KPIs';
   })
 
-  // Business Manager KPI Detection
   .addCase(detectBusinessManagerKPIs.pending, (state) => {
     state.detectedKpisStatus.business_manager = 'loading';
     state.detectedKpisError.business_manager = null;
@@ -483,7 +544,6 @@ const APISlice = createSlice({
       action.payload?.error || action.error?.message || 'Failed to fetch business manager KPIs';
   })
 
-  // Testing Team KPI Detection
   .addCase(detectTestingTeamKPIs.pending, (state) => {
     state.detectedKpisStatus.testing_team = 'loading';
     state.detectedKpisError.testing_team = null;
@@ -591,7 +651,19 @@ const APISlice = createSlice({
   .addCase(fetchAdminDashboardData.rejected, (state, action) => {
     state.adminDashboardStatus = 'failed';
     state.adminDashboardError = action.payload || 'Failed to fetch admin dashboard data';
+  })
+    .addCase(fetchGitHubUsers.pending, (state) => {
+    state.githubUserStatus = 'loading';
+  })
+  .addCase(fetchGitHubUsers.fulfilled, (state, action) => {
+    state.githubUserStatus = 'succeeded';
+    state.githubUsers = action.payload;
+  })
+  .addCase(fetchGitHubUsers.rejected, (state, action) => {
+    state.githubUserStatus = 'failed';
+    state.githubUserError = action.payload;
   });
+
 
 
   },

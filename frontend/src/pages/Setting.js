@@ -31,7 +31,6 @@ function Setting() {
       return;
     }
 
-    // You can add more validation for email if needed
 
     dispatch(updateSettings({
       username,
@@ -41,7 +40,6 @@ function Setting() {
     }));
   };
 
-  // Reset fields after success (optional)
   useEffect(() => {
     if (settingsStatus === 'succeeded') {
       setUsername('');

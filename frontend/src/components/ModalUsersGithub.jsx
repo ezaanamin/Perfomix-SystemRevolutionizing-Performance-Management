@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../API/slice/API"; // Updated import
+import { fetchGitHubUsers, Bot_Detection } from "../API/slice/API";
 
 const modalStyle = {
   position: "absolute",
@@ -31,79 +31,54 @@ const modalStyle = {
   flexDirection: "column",
 };
 
-const randomUsersMock = [
-  {
-    user_id: "r1",
-    name: "RandomUser1",
-    role: "Software Engineer",
-    github_username: "randomuser1",
-  },
-  {
-    user_id: "r2",
-    name: "RandomUser2",
-    role: "Software Engineer",
-    github_username: "randomuser2",
-  },
-];
-
-const getRandomBotPrediction = () => (Math.random() < 0.5 ? 1 : 0);
-
 function ModalUsersGithub({ open, handleClose }) {
   const dispatch = useDispatch();
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [botPrediction, setBotPrediction] = useState(null);
-  const [selectedMetadata, setSelectedMetadata] = useState(null);
 
-  const users = useSelector((state) => state.API.usersData); // Using your API state slice
-  const status = useSelector((state) => state.API.userStatus); // Assuming this is the loading status
-  const error = useSelector((state) => state.API.userError);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [metadata, setMetadata] = useState(null);
+
+  const {
+    githubUsers,
+    githubUserStatus,
+    githubUserError,
+    editKpiStatus,
+    latestBotDetection,
+    editKpiError,
+  } = useSelector((state) => state.API);
 
   useEffect(() => {
-    if (open && status === "idle") {
-      dispatch(fetchUsers());
+    if (open && githubUserStatus === "idle") {
+      dispatch(fetchGitHubUsers());
     }
     if (!open) {
-      setSelectedUserId(null);
-      setBotPrediction(null);
-      setSelectedMetadata(null);
+      resetState();
     }
-  }, [open, status, dispatch]);
+  }, [open, githubUserStatus, dispatch]);
 
-  const softwareEngineers = Array.isArray(users)
-    ? users.filter((u) => u.role === "Software Engineer")
-    : [];
-
-  const usersToShow =
-    softwareEngineers.length > 0 ? softwareEngineers : randomUsersMock;
-
-  const loading = status === "loading";
+  const resetState = () => {
+    setSelectedUser(null);
+    setMetadata(null);
+  };
 
   const handleUserClick = (user) => {
-    setSelectedUserId(user.user_id);
-    setSelectedMetadata({
-      github_username:
-        user.github_username || user.name.toLowerCase().replace(/\s+/g, ""),
-      last_commit: "2025-06-10",
-      repo_count: 12,
-      followers: 34,
+    setSelectedUser(user);
+    setMetadata({
+      username: user.login,
+      avatar: user.avatar_url,
+      profile: user.html_url,
+      userId: user.id,
+      fetchedAt: new Date().toISOString(),
     });
-    setBotPrediction(getRandomBotPrediction());
+
+    dispatch(Bot_Detection({ user_id: user.id, ...user.activity }));
   };
 
   const handleBack = () => {
-    setSelectedUserId(null);
-    setBotPrediction(null);
-    setSelectedMetadata(null);
+    resetState();
   };
-
-  const botDetectionText = (prediction) => {
-    return prediction === 1 ? "Bot Detected" : "No Bot Detected";
-  };
-
-  const selectedUser = usersToShow.find((u) => u.user_id === selectedUserId);
 
   const renderUserList = () => {
-    if (loading) {
+    if (githubUserStatus === "loading") {
       return (
         <Box display="flex" justifyContent="center" my={5}>
           <CircularProgress />
@@ -111,25 +86,32 @@ function ModalUsersGithub({ open, handleClose }) {
       );
     }
 
-    if (error) {
-      return <Typography color="error">Error: {error}</Typography>;
+    if (githubUserError) {
+      return (
+        <Typography color="error">
+          Error:{" "}
+          {typeof githubUserError === "string"
+            ? githubUserError
+            : JSON.stringify(githubUserError)}
+        </Typography>
+      );
     }
 
-    if (usersToShow.length === 0) {
-      return <Typography>No software engineers found.</Typography>;
+    if (!githubUsers || githubUsers.length === 0) {
+      return <Typography>No active GitHub users found.</Typography>;
     }
 
     return (
       <>
         <Typography variant="h5" fontWeight="600" gutterBottom>
-          Software Engineers
+          Active GitHub Users
         </Typography>
         <Divider sx={{ mb: 2 }} />
         <Box sx={{ overflowY: "auto", flexGrow: 1, pr: 1, mb: 2 }}>
           <List>
-            {usersToShow.map((user) => (
+            {githubUsers.map((user) => (
               <ListItem
-                key={user.user_id}
+                key={user.id}
                 button
                 onClick={() => handleUserClick(user)}
                 sx={{
@@ -141,8 +123,8 @@ function ModalUsersGithub({ open, handleClose }) {
               >
                 <Box
                   component="img"
-                  src={`https://i.pravatar.cc/100?u=${user.user_id}`}
-                  alt={user.name}
+                  src={user.avatar_url}
+                  alt={user.login}
                   sx={{
                     width: 48,
                     height: 48,
@@ -152,12 +134,8 @@ function ModalUsersGithub({ open, handleClose }) {
                   }}
                 />
                 <ListItemText
-                  primary={
-                    <Typography fontWeight="600">
-                      @{user.name.toLowerCase().replace(/\s+/g, "")}
-                    </Typography>
-                  }
-                  secondary={user.role}
+                  primary={<Typography fontWeight="600">@{user.login}</Typography>}
+                  secondary={`GitHub ID: ${user.id}`}
                 />
               </ListItem>
             ))}
@@ -177,58 +155,68 @@ function ModalUsersGithub({ open, handleClose }) {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h6" fontWeight="600">
-            @{selectedUser.name.toLowerCase().replace(/\s+/g, "")}'s Bot Detection
+            @{selectedUser.login}'s Bot Detection
           </Typography>
         </Box>
         <Divider sx={{ mb: 2 }} />
 
-        {loading ? (
+        {metadata && (
+          <Box mb={2}>
+            <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+              User Metadata:
+            </Typography>
+            <pre
+              style={{
+                backgroundColor: "#f4f4f4",
+                padding: "10px",
+                borderRadius: "4px",
+                maxHeight: "180px",
+                overflowY: "auto",
+                fontSize: "0.85rem",
+              }}
+            >
+              {JSON.stringify(metadata, null, 2)}
+            </pre>
+          </Box>
+        )}
+
+        {editKpiStatus === "loading" && (
           <Box display="flex" justifyContent="center" my={5}>
             <CircularProgress />
           </Box>
-        ) : (
-          <>
-            {selectedMetadata && (
-              <Box mb={2}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Metadata Used:
-                </Typography>
-                <pre
-                  style={{
-                    backgroundColor: "#f4f4f4",
-                    padding: "10px",
-                    borderRadius: "4px",
-                    maxHeight: "150px",
-                    overflowY: "auto",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  {JSON.stringify(selectedMetadata, null, 2)}
-                </pre>
-              </Box>
-            )}
+        )}
 
-            {botPrediction !== null && (
-              <Box
-                sx={{
-                  mt: 1,
-                  p: 2,
-                  borderRadius: 2,
-                  backgroundColor: botPrediction === 1 ? "#ffebee" : "#e8f5e9",
-                  color: botPrediction === 1 ? "#c62828" : "#2e7d32",
-                  fontWeight: "700",
-                  fontSize: "1.25rem",
-                  textAlign: "center",
-                  boxShadow:
-                    botPrediction === 1
-                      ? "0 0 8px 2px rgba(198, 40, 40, 0.4)"
-                      : "0 0 8px 2px rgba(46, 125, 50, 0.4)",
-                }}
-              >
-                {botDetectionText(botPrediction)}
-              </Box>
-            )}
-          </>
+        {editKpiStatus === "failed" && (
+          <Typography color="error" mb={2}>
+            Error:{" "}
+            {typeof editKpiError === "string"
+              ? editKpiError
+              : JSON.stringify(editKpiError)}
+          </Typography>
+        )}
+
+        {editKpiStatus === "succeeded" && latestBotDetection && (
+          <Box
+            sx={{
+              mt: 1,
+              p: 2,
+              borderRadius: 2,
+              backgroundColor:
+                latestBotDetection.prediction === 1 ? "#ffebee" : "#e8f5e9",
+              color: latestBotDetection.prediction === 1 ? "#c62828" : "#2e7d32",
+              fontWeight: "700",
+              fontSize: "1.25rem",
+              textAlign: "center",
+              boxShadow:
+                latestBotDetection.prediction === 1
+                  ? "0 0 8px 2px rgba(198, 40, 40, 0.4)"
+                  : "0 0 8px 2px rgba(46, 125, 50, 0.4)",
+            }}
+          >
+            {latestBotDetection.prediction === 1
+              ? "Bot Detected"
+              : "No Bot Detected"}
+          </Box>
         )}
       </>
     );
@@ -239,15 +227,19 @@ function ModalUsersGithub({ open, handleClose }) {
       open={open}
       onClose={() => {
         handleClose();
-        setSelectedUserId(null);
-        setBotPrediction(null);
-        setSelectedMetadata(null);
+        resetState();
       }}
     >
       <Box sx={modalStyle}>
-        {selectedUserId ? renderUserDetails() : renderUserList()}
+        {selectedUser ? renderUserDetails() : renderUserList()}
         <Box mt={2} textAlign="right">
-          <Button variant="contained" onClick={handleClose}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              handleClose();
+              resetState();
+            }}
+          >
             Close
           </Button>
         </Box>

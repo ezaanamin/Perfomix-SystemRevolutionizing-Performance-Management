@@ -12,7 +12,6 @@ const UserDetailModal = ({
   userKpiHistoryError,
   onClose,
 }) => {
-  // Only active KPIs with status 'active'
   const activeKpis = Array.isArray(detectedKpisResult)
     ? detectedKpisResult.filter(kpi => kpi.status === 'active')
     : [];
@@ -30,7 +29,7 @@ const UserDetailModal = ({
           boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
         }}
       >
-        {/* User Info */}
+ 
         <Typography variant="h5" sx={{ mb: 2 }}>
           {user.name}
         </Typography>
@@ -43,7 +42,7 @@ const UserDetailModal = ({
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Active KPIs */}
+  
         <Typography variant="h6" sx={{ mb: 2 }}>
           Active KPIs
         </Typography>
@@ -68,7 +67,7 @@ const UserDetailModal = ({
           <Typography>No active KPIs detected.</Typography>
         )}
 
-        {/* Close Button */}
+ 
         <KPIButton
           onClick={onClose}
           sx={{ mt: 3, backgroundColor: '#4361EE' }}

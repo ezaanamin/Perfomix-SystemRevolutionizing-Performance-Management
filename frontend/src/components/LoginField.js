@@ -42,7 +42,7 @@ function LoginField() {
               const data = jwtDecode(response.payload.access_token);
               data.role = data.role.toLowerCase();
               console.log(data.role, 'EZAAN');
-              const expirationTime = data.exp * 1000; // convert to ms
+              const expirationTime = data.exp * 1000; 
                localStorage.setItem('token_expiration', expirationTime);
 
               localStorage.setItem('role', data.role);
@@ -56,7 +56,7 @@ function LoginField() {
     SetRole(null);
     navigate('/');
   }, timeRemaining);
-              // Direct user to respective role page
+              
               if (data.role === 'admin') {
                 SetRole(data.role);
                 navigate('/admin');

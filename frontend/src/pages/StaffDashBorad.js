@@ -34,7 +34,7 @@ function StaffDashboard() {
           const link = document.createElement('a');
           link.href = url;
   
-          // Set a filename, adjust extension as needed
+          
           link.setAttribute('download', 'performance_report.pdf');
           document.body.appendChild(link);
           link.click();
@@ -62,7 +62,7 @@ function StaffDashboard() {
 
   return (
     <Box padding={3}>
-      {/* Staff Info */}
+      {}
       <Typography
         variant="h4"
         fontWeight="bold"
@@ -72,7 +72,7 @@ function StaffDashboard() {
         Staff Dashboard - {Name}
       </Typography>
 
-      {/* === Recommendations section === */}
+      {}
       <Box
         backgroundColor={COLORS.lightThemeBackground}
         padding="20px"
@@ -92,7 +92,7 @@ function StaffDashboard() {
         <RecommendationsGrid isDashboard={true} />
       </Box>
 
-      {/* Report Download Section */}
+      {}
       <Box
         height="200px"
         width="100%"

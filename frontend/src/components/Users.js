@@ -17,8 +17,7 @@ import { UserContext } from '../ContextState/contextState';
 import UserDetailModal from './UserDetailsModal';
 import AnalyzeKpiModal from './AnalyzeKpiPerformanceModal';
 import { CircularProgress, Box, Typography } from '@mui/material';
-import { Button } from '@mui/material'; // add this at the top if not already
-// 📌 Target mapping helper
+import { Button } from '@mui/material'; 
 const getTargetForKPI = (kpiName) => {
   const targets = {
     'Budget Utilization': 80,
@@ -36,7 +35,7 @@ const UserGrid = () => {
   const dispatch = useDispatch();
   const { open, SetRole, setOpen } = useContext(UserContext);
 
-  // Redux selectors
+
   const {
     usersData,
     userStatus,
@@ -49,25 +48,24 @@ const UserGrid = () => {
     fetchError: kpiFetchError,
   } = useSelector((state) => state.API);
 
-  // Local states
+
   const [rows, setRows] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [analyzeOpen, setAnalyzeOpen] = useState(false);
   const [selectedUserPerformance, setSelectedUserPerformance] = useState(null);
 
-  // Set role from local storage on mount
+
   useEffect(() => {
     const storedRole = localStorage.getItem('role');
     if (storedRole) SetRole(storedRole);
   }, [SetRole]);
 
-  // Fetch users
+
   useEffect(() => {
     if (userStatus === 'idle') dispatch(fetchUsers());
     console.log(usersData,'user')
   }, [dispatch, userStatus]);
 
-  // Build DataGrid rows when users are fetched
   useEffect(() => {
     if (userStatus === 'succeeded') {
       const filtered = usersData.filter((u) => u.role !== 'Admin');
@@ -83,7 +81,7 @@ const UserGrid = () => {
     }
   }, [usersData, userStatus]);
 
-  // Open User Details
+
   const handleShowUser = (user) => {
     setSelectedUser(user);
     setOpen(true);
@@ -91,11 +89,11 @@ const UserGrid = () => {
     dispatch(fetchActiveKpisByRole(user.role));
   };
 
-  // Analyze KPI performance
+
   const handleAnalyzePerformance = (user) => {
     setSelectedUser(user);
 
-    // Choose detection thunk
+
     const thunkMap = {
       'Software Engineer': detectSoftwareEngineerKPIs,
       'Project Manager': detectProjectManagerKPIs,
@@ -109,7 +107,6 @@ const UserGrid = () => {
       return;
     }
 
-    // Dispatch detection and patch target values
    
   dispatch(thunk(user.id))
     .unwrap()
@@ -145,7 +142,6 @@ const UserGrid = () => {
     setSelectedUserPerformance(null);
   };
 
-  // Table columns
   const columns = [
     { field: 'id', headerName: 'ID', width: 80 },
     { field: 'name', headerName: 'Name', width: 200 },
@@ -198,7 +194,7 @@ const UserGrid = () => {
     <>
       <Header title="Users" subtitle="Manage and track user data" />
 
-      {/* Loader */}
+  
       {userStatus === 'loading' && (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
           <CircularProgress />
@@ -208,7 +204,7 @@ const UserGrid = () => {
         </Box>
       )}
 
-      {/* Error */}
+
       {userStatus === 'failed' && (
         <Box sx={{ textAlign: 'center', color: 'error.main', mt: 4 }}>
           <Typography variant="h6">Failed to load users</Typography>
@@ -216,14 +212,14 @@ const UserGrid = () => {
         </Box>
       )}
 
-      {/* No users */}
+
       {userStatus === 'succeeded' && rows.length === 0 && (
         <Typography variant="h6" sx={{ textAlign: 'center', mt: 4, color: 'text.secondary' }}>
           No users found.
         </Typography>
       )}
 
-      {/* DataGrid */}
+
       {userStatus === 'succeeded' && rows.length > 0 && (
         <DataGrid
           rows={rows}
@@ -239,7 +235,7 @@ const UserGrid = () => {
         />
       )}
 
-      {/* User Detail Modal */}
+ 
       {open && selectedUser && (
         <UserDetailModal
           user={selectedUser}
@@ -253,7 +249,7 @@ const UserGrid = () => {
         />
       )}
 
-      {/* Analyze KPI Modal */}
+ 
       {analyzeOpen && selectedUser && (
         <AnalyzeKpiModal
           user={selectedUser}

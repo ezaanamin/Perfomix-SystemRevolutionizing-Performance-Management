@@ -3,7 +3,12 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useDispatch, useSelector } from "react-redux";
 import { performance_with_courses } from "../API/slice/API";
 import Header from "./Header";
-import { Box, CircularProgress, Typography, Chip } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Chip,
+} from "@mui/material";
 
 const RecommendationsGrid = ({ isDashboard = false }) => {
   const dispatch = useDispatch();
@@ -16,40 +21,48 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
 
   const [rows, setRows] = useState([]);
 
-  // Fetch data on mount
   useEffect(() => {
     dispatch(performance_with_courses());
   }, [dispatch]);
 
-  // Map API response to DataGrid row format
   useEffect(() => {
     if (performance_status === "succeeded") {
       let mappedRows = low_performance_with_courses.map((item) => ({
         id: item.RecommendationID,
-        userName: item.UserName,
-        courses: item.RecommendationText,
+        userName: item.UserName || "N/A",
+        role: item.Role || "N/A",
+        kpiName: item.KPIName || "N/A",
+        actualValue: item.ActualValue ?? "N/A",
+        targetValue: item.TargetValue ?? "N/A",
+        performancePercent: item.PerformancePercent || "0%",
+        timestamp: item.Timestamp || "N/A",
+        courses: item.RecommendationText || "No courses recommended",
       }));
 
       if (isDashboard) {
-        mappedRows = mappedRows.slice(0, 3); // show only first 5 rows on dashboard
+        mappedRows = mappedRows.slice(0, 3);
       }
 
       setRows(mappedRows);
     }
   }, [low_performance_with_courses, performance_status, isDashboard]);
 
-  // Define DataGrid columns based on dashboard or full view
   const columns = isDashboard
     ? [
-        { field: "userName", headerName: "User Name", flex: 1, minWidth: 150 },
+        {
+          field: "userName",
+          headerName: "User Name",
+          flex: 1,
+          minWidth: 150,
+        },
         {
           field: "courses",
           headerName: "Recommended Courses",
           flex: 2,
           minWidth: 250,
-          renderCell: (params) => (
-            <Typography variant="body2" noWrap title={params.value}>
-              {params.value}
+          renderCell: ({ value }) => (
+            <Typography variant="body2" noWrap title={value}>
+              {value}
             </Typography>
           ),
         },
@@ -57,7 +70,7 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
     : [
         { field: "id", headerName: "ID", width: 80 },
         { field: "userName", headerName: "User Name", width: 160 },
-        { field: "role", headerName: "Role", width: 160 },
+        { field: "role", headerName: "Role", width: 140 },
         { field: "kpiName", headerName: "KPI", width: 160 },
         { field: "actualValue", headerName: "Actual", width: 100 },
         { field: "targetValue", headerName: "Target", width: 100 },
@@ -65,13 +78,14 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
           field: "performancePercent",
           headerName: "Performance %",
           width: 140,
-          renderCell: (params) => {
-            const percent = parseFloat(params.value.replace("%", ""));
+          renderCell: ({ value }) => {
+            if (!value) return <Chip label="N/A" color="default" />;
+            const percent = parseFloat(value.replace("%", ""));
             let color = "default";
             if (percent < 50) color = "error";
             else if (percent < 70) color = "warning";
             else color = "success";
-            return <Chip label={params.value} color={color} />;
+            return <Chip label={value} color={color} />;
           },
         },
         { field: "timestamp", headerName: "Timestamp", width: 200 },
@@ -79,9 +93,9 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
           field: "courses",
           headerName: "Recommended Courses",
           width: 320,
-          renderCell: (params) => (
-            <Typography variant="body2" noWrap title={params.value}>
-              {params.value}
+          renderCell: ({ value }) => (
+            <Typography variant="body2" noWrap title={value}>
+              {value}
             </Typography>
           ),
         },
@@ -96,7 +110,7 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         />
       )}
 
-      {/* Loading state */}
+
       {performance_status === "loading" && (
         <Box
           sx={{
@@ -113,7 +127,7 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         </Box>
       )}
 
-      {/* Error state */}
+
       {performance_status === "failed" && (
         <Box sx={{ textAlign: "center", color: "error.main", mt: 4 }}>
           <Typography variant="h6">Failed to load recommendations</Typography>
@@ -123,7 +137,7 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         </Box>
       )}
 
-      {/* No data state */}
+
       {performance_status === "succeeded" && rows.length === 0 && (
         <Typography
           variant="h6"
@@ -133,7 +147,7 @@ const RecommendationsGrid = ({ isDashboard = false }) => {
         </Typography>
       )}
 
-      {/* Success state with data */}
+  
       {performance_status === "succeeded" && rows.length > 0 && (
         <DataGrid
           rows={rows}

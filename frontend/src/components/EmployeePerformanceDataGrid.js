@@ -2,16 +2,16 @@ import React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Paper, Typography, Box } from "@mui/material";
 
-// Sample employee data (limit to top 3)
+
 const employeeData = [
   {
     id: 1,
     name: "John Doe",
     role: "Software Engineer",
     performance: {
-      "Code Quality": 85.00, // Below threshold
-      "Code Efficiency": 15.00, // Below threshold
-      "Task Completion Rate": 75.00, // Below threshold
+      "Code Quality": 85.00, 
+      "Code Efficiency": 15.00, 
+      "Task Completion Rate": 75.00, 
     },
     recommendedCourses: ["Advanced Coding Standards", "Time Management for Engineers"],
   },
@@ -20,9 +20,9 @@ const employeeData = [
     name: "Jane Smith",
     role: "Project Manager",
     performance: {
-      "Milestone Achievement Rate": 90.00, // Above threshold
-      "Budget Utilization": 3.00, // Below threshold
-      "Resource Allocation": 88.00, // Above threshold
+      "Milestone Achievement Rate": 90.00, 
+      "Budget Utilization": 3.00, 
+      "Resource Allocation": 88.00, 
     },
     recommendedCourses: ["Project Management Best Practices", "Effective Resource Allocation"],
   },
@@ -31,15 +31,15 @@ const employeeData = [
     name: "Sam Lee",
     role: "Business Manager",
     performance: {
-      "Revenue Growth": 8.00, // Below threshold
-      "Customer Satisfaction": 85.00, // Above threshold
-      "Operational Efficiency": 10.00, // Below threshold
+      "Revenue Growth": 8.00, 
+      "Customer Satisfaction": 85.00, 
+      "Operational Efficiency": 10.00, 
     },
     recommendedCourses: ["Customer Relationship Management", "Operational Efficiency Strategies"],
   },
 ];
 
-// Function to get KPI threshold
+
 const getThreshold = (kpiName) => {
   const thresholds = {
     "Code Quality": 90,
@@ -55,7 +55,7 @@ const getThreshold = (kpiName) => {
   return thresholds[kpiName] || 0;
 };
 
-// Function to check if performance is below average
+
 const isBelowAverage = (performance) => {
   return Object.keys(performance).some((key) => performance[key] < getThreshold(key));
 };
@@ -71,7 +71,7 @@ const EmployeePerformanceDataGrid = () => {
     id: employee.id,
     name: employee.name,
     performance: isBelowAverage(employee.performance) ? "Below Average" : "Average",
-    recommendedCourses: employee.recommendedCourses.join(", "), // Join the courses as a string
+    recommendedCourses: employee.recommendedCourses.join(", "), 
   }));
 
   return (
@@ -81,31 +81,31 @@ const EmployeePerformanceDataGrid = () => {
       width="100%" 
       height="22vh"
       sx={{
-        display: "flex", // Center the DataGrid
-        justifyContent: "center", // Center horizontally
-        alignItems: "center", // Center vertically
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
         "& .MuiDataGrid-root": {
           border: "none",
-          width: "100%", // Adjust table width
+          width: "100%", 
         },
         "& .MuiDataGrid-cell": {
           borderBottom: "none",
         },
         "& .MuiDataGrid-columnHeaders": {
-          backgroundColor: "#D0DBE9", // Background color
-          color: "#2D3A56", // Secondary color
+          backgroundColor: "#D0DBE9", 
+          color: "#2D3A56", 
           borderBottom: "none",
         },
         "& .MuiDataGrid-virtualScroller": {
-          backgroundColor: "#F0F7FF", // Primary light color
+          backgroundColor: "#F0F7FF", 
         },
         "& .MuiDataGrid-footerContainer": {
-          backgroundColor: "#D0DBE9", // Background color
-          color: "#2D3A56", // Secondary color
+          backgroundColor: "#D0DBE9", 
+          color: "#2D3A56", 
           borderTop: "none",
         },
         "& .MuiDataGrid-toolbarContainer .MuiButton-text": {
-          color: "#4361EE", // Button text color
+          color: "#4361EE", 
         },
       }}
     >

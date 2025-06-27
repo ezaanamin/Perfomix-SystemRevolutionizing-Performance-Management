@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { AdminDashboardDiv } from "../style/style";
 import LineChart from "../components/LineChart";
 import BarChart from "../components/BarChart";
-import GeographyChart from "../components/EmployeePerformanceDataGrid";
 import ProgressCircle from "../components/ProgressCircle";
 import { Box, Button, Typography } from "@mui/material";
 import StatBox from "../components/StatsBox";
@@ -82,7 +81,7 @@ function AdminDashboard() {
 
   return (
     <AdminDashboardDiv>
-      {/* Header */}
+ 
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="PERFOMIX DASHBOARD" subtitle="Track performance, detect anomalies, and gain insights" />
         <Button
@@ -100,7 +99,7 @@ function AdminDashboard() {
         </Button>
       </Box>
 
-      {/* Stats Grid */}
+
       <Box
         display="grid"
         gridTemplateColumns="repeat(12, 1fr)"
@@ -124,7 +123,7 @@ function AdminDashboard() {
           </Box>
         ))}
 
-        {/* System Overview */}
+  
         <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground} p="30px">
           <Typography variant="h5" fontWeight="600">Perfomix System Overview</Typography>
           <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
@@ -136,7 +135,7 @@ function AdminDashboard() {
           </Box>
         </Box>
 
-        {/* KPI Bar Chart */}
+   
         <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground}>
           <Typography variant="body1" fontWeight="600" sx={{ padding: "20px" }}>
             Real-Time KPI Tracking & Anomaly Detection
@@ -145,20 +144,18 @@ function AdminDashboard() {
             <BarChart isDashboard={true} />
           </Box>
         </Box>
-
-        {/* NLP Chart */}
-        <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground} p="10px">
+     <Box gridColumn="span 4" gridRow="span 2" backgroundColor={COLORS.lightThemeBackground} p="10px">
           <Typography variant="body1" fontWeight="600" mb="10px">
             NLP-Based Employee Recommendations
           </Typography>
           <Box height="100px">
-            {/* <GeographyChart isDashboard={true} /> */}
+        
            <RecommendationsGrid isDashboard={true} />
           </Box>
         </Box>
       </Box>
 
-      {/* Total Performance Score Full Width */}
+  
       <Box
         display="grid"
         gridTemplateColumns="repeat(12, 1fr)"

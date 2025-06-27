@@ -14,14 +14,12 @@ const PerformanceGrid = () => {
     performance_error,
   } = useSelector((state) => state.API);
 
-  useEffect(() => {
-    if (performance_status === 'idle') {
-      dispatch(Performance_Data());
-      console.log(performance_data,'per')
-    }
-  }, [dispatch, performance_status]);
+useEffect(() => {
+  dispatch(Performance_Data());
+}, [dispatch]);
 
   const getPerformanceChip = (value) => {
+    if (value === null || value === undefined) return <Chip label="N/A" color="default" />;
     if (value < 50) {
       return <Chip label={`${value}%`} sx={{ backgroundColor: '#FF6B6B', color: 'white' }} />;
     } else if (value < 80) {
@@ -42,7 +40,7 @@ const PerformanceGrid = () => {
       headerName: 'Performance',
       width: 160,
       renderCell: (params) => getPerformanceChip(params.value),
-      sortComparator: (v1, v2) => v1 - v2, // Enable numeric sorting
+      sortComparator: (v1, v2) => v1 - v2,
     },
     { field: 'Timestamp', headerName: 'Timestamp', width: 200 },
   ];

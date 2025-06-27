@@ -34,7 +34,7 @@ const Topbar = () => {
       p={2} 
       bgcolor={"#D0DBE9"} 
     >
-      {/* SEARCH BAR */}
+  
       <Box
         display="flex"
         backgroundColor={secondaryColor}
@@ -49,7 +49,7 @@ const Topbar = () => {
         </IconButton>
       </Box>
 
-      {/* ICONS */}
+
       <Box display="flex">
         <IconButton>
           <NotificationsOutlinedIcon sx={{ color: primaryColor }} />
@@ -61,7 +61,6 @@ const Topbar = () => {
           <PersonOutlinedIcon sx={{ color: primaryColor }} />
         </IconButton>
 
-        {/* Dropdown Menu */}
         <Menu
           anchorEl={anchorEl}
           open={open}

@@ -2,11 +2,10 @@ import { Box, Typography } from "@mui/material";
 import ProgressCircle from "./ProgressCircle";
 
 const StatBox = ({ title, subtitle, icon, progress, increase }) => {
-  // Define the colors directly
-  const primaryColor = "#4B7DE7";  // Primary color
-  const greyColor = "#B0B0B0";  // Grey color for text
-  const greenAccentColor = "#4CAF50";  // Green accent color
-  const greenAccentDarkColor = "#388E3C";  // Darker green for "increase" text
+  const primaryColor = "#4B7DE7"; 
+  const greyColor = "#B0B0B0";  
+  const greenAccentColor = "#4CAF50";  
+  const greenAccentDarkColor = "#388E3C";  
 
   return (
     <Box width="100%" m="0 30px">

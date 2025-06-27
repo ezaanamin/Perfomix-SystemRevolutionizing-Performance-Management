@@ -23,10 +23,10 @@ const EditKPIModal = ({ open, onClose, selectedKPI }) => {
     values.status = status ? 'active' : 'inactive';
 
     if (selectedKPI && selectedKPI.id) {
-      // Editing an existing KPI
+      
       dispatch(editKpi({ ...values, kpi_id: selectedKPI.id }));
     } else {
-      // Adding a new KPI
+      
       dispatch(ADDKPI(values));
     }
 
@@ -38,7 +38,7 @@ const EditKPIModal = ({ open, onClose, selectedKPI }) => {
       <DialogTitle>{selectedKPI ? 'Edit KPI' : 'Add New KPI'}</DialogTitle>
       <Formik
         initialValues={{
-          role: selectedKPI ? selectedKPI.role : '',  // This will be read-only unless needed
+          role: selectedKPI ? selectedKPI.role : '',  
           kpi: selectedKPI ? selectedKPI.kpi_name : '',
           target: selectedKPI ? selectedKPI.target : '',
           status: selectedKPI ? selectedKPI.status : 'inactive',
@@ -62,7 +62,7 @@ const EditKPIModal = ({ open, onClose, selectedKPI }) => {
                 fullWidth
                 margin="normal"
                 disabled
-                // role seems to be read-only, no need to edit
+                
               />
               <Field
                 as={TextField}

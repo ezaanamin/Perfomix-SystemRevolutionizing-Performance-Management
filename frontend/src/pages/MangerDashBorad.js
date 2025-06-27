@@ -97,7 +97,6 @@ function ManagerDashboard() {
     </ListItem>
   );
 
-  // New download handler
   const handleDownloadReport = async () => {
     setDownloading(true);
     try {
@@ -109,7 +108,6 @@ function ManagerDashboard() {
         const link = document.createElement('a');
         link.href = url;
 
-        // Set a filename, adjust extension as needed
         link.setAttribute('download', 'performance_report.pdf');
         document.body.appendChild(link);
         link.click();

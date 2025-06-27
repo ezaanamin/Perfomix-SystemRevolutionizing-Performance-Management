@@ -4,11 +4,11 @@ import { useTheme } from "@mui/material";
 const LineChart = () => {
 
   const colors = {
-    primaryLine: "#4361EE", // Bright Blue
-    anomalyLine: "#FF4C61", // Red for anomalies
+    primaryLine: "#4361EE", 
+    anomalyLine: "#FF4C61", 
   };
 
-  // Custom Data representing KPI tracking with anomalies
+  
   const data = [
     {
       id: "employee_123",
@@ -36,23 +36,23 @@ const LineChart = () => {
         axis: {
           domain: {
             line: {
-              stroke: colors.primaryLine, // Axis line color
+              stroke: colors.primaryLine, 
             },
           },
           ticks: {
             line: {
-              stroke: colors.primaryLine, // Axis tick line color
+              stroke: colors.primaryLine, 
               strokeWidth: 1,
             },
             text: {
-              fill: colors.primaryLine, // Tick text color
+              fill: colors.primaryLine, 
             },
           },
         },
       }}
-      colors={[colors.primaryLine]} // Apply primary line color
+      colors={[colors.primaryLine]} 
       margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
-      xScale={{ type: "band", padding: 0.3 }} // Band scale for categorical data
+      xScale={{ type: "band", padding: 0.3 }} 
       yScale={{
         type: "linear",
         min: "auto",

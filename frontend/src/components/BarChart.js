@@ -1,25 +1,25 @@
 import { useTheme } from "@mui/material";
 import { ResponsiveBar } from "@nivo/bar";
-import { darken } from "polished"; // For color adjustments
+import { darken } from "polished"; 
 
 const BarChart = ({ isDashboard = false }) => {
   const theme = useTheme();
 
-  // Define a single color scheme
+  
   const colors = {
-    background: "#F5F9FF", // Soft Sky Blue for background
-    text: "#2D3A56", // Dark Navy Blue for Text
-    primary: "#4361EE", // Bright Blue for primary bars/lines
-    secondary: "#80B5FA", // Soft Blue for secondary bars/lines
-    accent: "#FFA600", // Vivid Orange for accent
-    highlight: "#FF4C61", // Bright Coral Red for highlighted points
-    axisLine: "#BBBBBB", // Gray for axis lines
-    gridLine: "#E6E6E6", // Very Light Gray for grid lines
-    hoverBox: "#E6F7F7", // Light Cyan for hover on box
-    hoverGraph: darken(0.1, "#4361EE"), // Darkened Bright Blue for hover on graph
+    background: "#F5F9FF", 
+    text: "#2D3A56", 
+    primary: "#4361EE", 
+    secondary: "#80B5FA", 
+    accent: "#FFA600", 
+    highlight: "#FF4C61", 
+    axisLine: "#BBBBBB", 
+    gridLine: "#E6E6E6", 
+    hoverBox: "#E6F7F7", 
+    hoverGraph: darken(0.1, "#4361EE"), 
   };
 
-  // Reshaped KPI data structure for better visualization
+  
   const kpiData = [
     {
       role: "Software Engineer",
@@ -46,10 +46,10 @@ const BarChart = ({ isDashboard = false }) => {
       "Bug Detection Rate": 100,
       "Test Execution Time": 20.00,
     },
-    // Add more data entries if necessary
+    
   ];
 
-  // All keys in the chart
+  
   const allKeys = [
     "Code Quality",
     "Code Efficiency",
@@ -68,7 +68,7 @@ const BarChart = ({ isDashboard = false }) => {
 
   return (
     <ResponsiveBar
-      data={kpiData} // Using the reshaped KPI data
+      data={kpiData} 
       theme={{
         axis: {
           domain: {
@@ -88,7 +88,7 @@ const BarChart = ({ isDashboard = false }) => {
             },
             text: {
               fill: colors.text,
-              fontSize: 9, // Reduced font size for tick labels
+              fontSize: 9, 
             },
           },
         },
@@ -98,8 +98,8 @@ const BarChart = ({ isDashboard = false }) => {
           },
         },
       }}
-      keys={allKeys} // Display all keys in the chart
-      indexBy="role" // The x-axis labels (roles)
+      keys={allKeys} 
+      indexBy="role" 
       margin={{ top: 50, right: 20, bottom: 20, left: 60 }}
       padding={0.5}
       valueScale={{ type: "linear" }}
@@ -138,7 +138,7 @@ const BarChart = ({ isDashboard = false }) => {
         legend: isDashboard ? undefined : "Role",
         legendPosition: "middle",
         legendOffset: 32,
-        tickFontSize: 10, // Reduced font size for axis bottom labels
+        tickFontSize: 10, 
       }}
       axisLeft={{
         tickSize: 5,
@@ -147,9 +147,9 @@ const BarChart = ({ isDashboard = false }) => {
         legend: isDashboard ? undefined : "KPI",
         legendPosition: "middle",
         legendOffset: -40,
-        tickFontSize: 10, // Reduced font size for axis left labels
+        tickFontSize: 10, 
       }}
-      enableLabel={true} // Ensure that the keys are enabled
+      enableLabel={true} 
       labelSkipWidth={12}
       labelSkipHeight={12}
       labelTextColor={{
@@ -157,8 +157,8 @@ const BarChart = ({ isDashboard = false }) => {
         modifiers: [["darker", 1.6]],
       }}
       label={{
-        fontSize: 9, // Reduced font size for labels (keys)
-        fill: colors.text, // Set the text color for labels
+        fontSize: 9, 
+        fill: colors.text, 
       }}
       role="application"
       barAriaLabel={function (e) {

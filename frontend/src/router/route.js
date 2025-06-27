@@ -4,8 +4,8 @@ import Login from '../pages/Login';
 import AdminDashBorad from '../pages/AdminDashBorad';
 import MangerDashBorad from '../pages/MangerDashBorad';
 import StaffDashBorad from '../pages/StaffDashBorad';
-import SidebarAdmin from '../components/SideBar'; // Import Sidebar
-import Topbar from '../components/TopBar'; // Import Topbar
+import SidebarAdmin from '../components/SideBar'; 
+import Topbar from '../components/TopBar'; 
 import { Box } from '@mui/material';
 import KPI from '../components/KPI';
 import Users from '../components/Users';

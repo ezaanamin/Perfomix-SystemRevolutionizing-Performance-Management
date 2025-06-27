@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { KPI, ADDKPI, editKpi } from '../API/slice/API'; // Import editKpi here
+import { KPI, ADDKPI, editKpi } from '../API/slice/API'; 
 import Header from '../components/Header';
 import { KPIButton } from '../style/style';
 import { UserContext } from '../ContextState/contextState';
 import { useNavigate } from 'react-router-dom';
-import EditKPIModal from "../components/EditModal"; // Ensure the modal is imported
+import EditKPIModal from "../components/EditModal"; 
 import Modal from "../Modal/Modal"
 
 const KPIGrid = () => {
@@ -56,7 +56,7 @@ const KPIGrid = () => {
   };
 
   const handleShowKPI = (kpi = null) => {
-    setSelectedKPI(kpi || {}); // Ensure selectedKPI is never null
+    setSelectedKPI(kpi || {}); 
     setOpenNewKPI(true);
   };
 
@@ -129,9 +129,9 @@ const KPIGrid = () => {
         selectedKPI={selectedKPI}
         onSubmit={values => {
           if (selectedKPI && selectedKPI.id) {
-            dispatch(editKpi(values)); // Update existing KPI
+            dispatch(editKpi(values)); 
           } else {
-            dispatch(ADDKPI(values)); // Add new KPI
+            dispatch(ADDKPI(values)); 
           }
           handleClose();
         }}

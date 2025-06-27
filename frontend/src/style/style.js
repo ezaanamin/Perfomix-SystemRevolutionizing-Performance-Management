@@ -6,14 +6,14 @@ export const Container = styled.div`
   height: 100vh;
   background-image: 
     linear-gradient(to left, #F0F7FF 50%, rgba(0, 0, 0, 0) 50%), 
-    url(${background}); /* The background image */
+    url(${background});
   background-size: cover;
   background-position: center;
 
   @media (max-width: 768px) {
     background-image: 
       linear-gradient(to top, #F0F7FF 50%, rgba(0, 0, 0, 0) 50%), 
-      url(${background}); /* Change the gradient direction for mobile */
+      url(${background});
   }
 `;
 export const  Logo=styled.img`
@@ -86,7 +86,7 @@ export const LoginButton=styled.button`
 background-color: rgba(67, 97, 238, 0.3686); 
 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 &:hover {
-    background-color: ${darken(0.1, 'rgba(67, 97, 238, 0.3686)')}; /* Darken the color on hover */
+    background-color: ${darken(0.1, 'rgba(67, 97, 238, 0.3686)')};
   }
 width:593px;
 height:62px;
@@ -125,7 +125,6 @@ export const AdminDashboardDiv = styled.div`
   height: 100vh;
 `;
 
-// Styled Components
 export const SideBarContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -290,26 +289,26 @@ export const CloseButton = styled.button`
   }
 `;
 export const KPIButton = styled.button`
-  background-color: #4361EE; /* A more vibrant and clean color */
+  background-color: #4361EE;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 200px; /* Smaller width for a better fit */
-  height: 50px; /* Adjusted height for better alignment */
+  width: 200px;
+  height: 50px; 
   border-radius: 20px;
   color: white;
-  font-size: 16px; /* Smaller font size */
+  font-size: 16px;
   font-weight: bold;
   text-align: center;
   border: none;
   cursor: pointer;
 
   &:hover {
-    background-color: ${darken(0.1, '#4361EE')}; /* Darken on hover */
+    background-color: ${darken(0.1, '#4361EE')};
   }
 
   @media (max-width: 768px) {
-    width: 150px; /* Adjust width for smaller screens */
-    height: 45px; /* Adjust height for smaller screens */
-    font-size: 14px; /* Adjust font size for smaller screens */
+    width: 150px; 
+    height: 45px;
+    font-size: 14px; 
   }
 `;
 export const EditKPIModalOverlay = styled.div`
