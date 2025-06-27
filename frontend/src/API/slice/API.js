@@ -66,7 +66,7 @@ export const ADDKPI = createAsyncThunk('kpi/add', async (kpiData, { rejectWithVa
 
 export const fetchUsers = createAsyncThunk('API/get_users', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/get_users`);
+    const response = await axios.get(`${API_BASE_URL}/get_users`,getAuthHeaders());
     return response.data;
   } catch (error) {
     return rejectWithValue(error?.response?.data || 'Unknown error fetching users');
@@ -74,7 +74,7 @@ export const fetchUsers = createAsyncThunk('API/get_users', async (_, { rejectWi
 });
 export const Performance_Data = createAsyncThunk('API/performance_Data', async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/get/performance_data`);
+    const response = await axios.get(`${API_BASE_URL}/get/performance_data`,getAuthHeaders());
   console.log(response.data,'performance_ezaan')
     return response.data;
   } catch (error) {
